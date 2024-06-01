@@ -20,9 +20,9 @@ from cachetools import TTLCache
 
 # 全局的定时调度器
 # 注意: 这个定时器是单线程调度的,当一个没处理完,又启动了下一个, 下一个就无法启动
-g_scheduler = BackgroundScheduler(timezone='Asia/Shanghai', misfire_grace_time=600)
-logger = logging.getLogger('apscheduler')
-logger.setLevel(logging.WARNING)
+# g_scheduler = BackgroundScheduler(timezone='Asia/Shanghai', misfire_grace_time=600)
+# logger = logging.getLogger('apscheduler')
+# logger.setLevel(logging.WARNING)
 
 
 def time_cost(func):
@@ -101,22 +101,6 @@ def get_datetime():
     :return: datetime
     """
     return datetime.datetime.now().strftime('%Y%m%d_%H%M%S.%f')
-
-
-def singleton(cls):
-    """
-    实现单例的装饰器
-    :param cls:
-    :return:
-    """
-    _instance = {}
-
-    def inner(*args, **kwargs):
-        if cls not in _instance:
-            _instance[cls] = cls(*args, **kwargs)
-        return _instance[cls]
-
-    return inner
 
 
 @contextmanager

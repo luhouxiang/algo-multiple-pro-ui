@@ -1,6 +1,7 @@
 import logging
 import os
-from common.util import singleton, create_log_sub_path
+from common.utils.singleton import Singleton
+from common.util import create_log_sub_path
 from common.config import LOG_PATH
 from logging import Filter
 # pip install concurrent-log-handler
@@ -11,7 +12,7 @@ class ErrorFilter(Filter):
         return record.levelno == logging.ERROR
 
 
-@singleton
+@Singleton
 class SysLogInit(object):
     def __init__(self, name: str, path: str = '', type: int = 0):
         """

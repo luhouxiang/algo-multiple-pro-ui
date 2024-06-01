@@ -7,6 +7,10 @@
 """
 import os
 from pathlib import Path
+import yaml
+from common.utils.singleton import Singleton
+import logging
+
 
 real_path = os.path.dirname(os.path.realpath(__file__))
 curr_path = Path(real_path)
@@ -156,5 +160,22 @@ MARKET_FACTOR_CLOSE_FILE = "market_factor_close.pkl"                 # 输出市
 
 # 计算中心端口
 CALC_CENTER_HTTP_PORT = 30238
+
+@Singleton
+class Cfg():
+    def __init__(self, path):
+        self.path = path
+        self.conf = {}
+
+    def load_yaml(self):
+        # path = CFG_FN
+        logging.info(f"conf_path: {self.path}")
+        with open(self.path, 'r', encoding='utf-8') as f:
+            self.conf = yaml.safe_load(f)
+            # config = yaml.load(f, Loader=yaml.FullLoader)
+            # config = yaml.load(f.read(), Loader=yaml.FullLoader)
+            # yaml.dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True)
+
+        return self.conf
 
 
