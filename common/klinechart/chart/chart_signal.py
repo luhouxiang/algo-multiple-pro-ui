@@ -4,7 +4,7 @@ from common.klinechart.chart.object import DataItem
 from .chart_base import ChartBase
 from .base import BAR_WIDTH
 from .manager import BarManager
-
+import logging
 
 class ChartSignal(ChartBase):
     """
@@ -60,8 +60,9 @@ class ChartSignal(ChartBase):
 
         if bar:
             text = f"signal: {bar[1]}"
+            logging.info(f"signal: {bar[1]}")
         else:
-            text = "signal: "
+            text = "signal: -"
 
         return text
 

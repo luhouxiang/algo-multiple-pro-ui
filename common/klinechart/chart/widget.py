@@ -235,7 +235,7 @@ class ChartWidget(pg.PlotWidget):
         """
         Update the x-axis range of plots.
         """
-        logging.info("cursor._x={}, _y={}".format(self._cursor._x, self._cursor._y))
+        # logging.info("cursor._x={}, _y={}".format(self._cursor._x, self._cursor._y))
         if align_type == EAlignType.center:
             max_ix = self._cursor._x + self._bar_count/2
             min_ix = self._cursor._x - self._bar_count/2

@@ -65,9 +65,10 @@ class ChartCandle(ChartBase):
         if not bar:
             text = ""
         else:
-            if self.__class__.__name__ == "CandleItem":
-                words = ["Date", bar[0].strftime("%Y-%m-%d"), "Time", bar[0].strftime("%H:%M"), "Open",
-                         str(bar[1]), "High", str(bar[2]), "low", str(bar[3]), "close", str(bar[4])]
+            if self.__class__.__name__ == "ChartCandle":
+                words = [f'Date:{bar[0].strftime("%Y-%m-%d")}', f'Time:{bar[0].strftime("%H:%M")}',
+                         f'Open:{str(bar[1])}', f'High :{str(bar[2])}', f"low   :{str(bar[3])}",
+                         f"close:{str(bar[4])}", f'index:{str(ix)}']
             else:
                 words = [str(bar[i]) for i in range(1, len(bar))]
             text = "\n".join(words)

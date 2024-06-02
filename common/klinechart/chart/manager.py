@@ -81,7 +81,7 @@ class BarManager:
         else:
             min_ix = to_int(min_ix)
             max_ix = to_int(max_ix)
-            max_ix = min(max_ix, len(self._all_chart_infos[layout_index][0].bars))  # TODO: 不减1？
+            # max_ix = min(max_ix, len(self._all_chart_infos[layout_index][0].bars))  # TODO: 不减1？
 
         if layout_index not in self._all_ranges:
             self._all_ranges[layout_index] = {}
