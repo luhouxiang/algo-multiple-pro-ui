@@ -45,9 +45,22 @@ class SysLogInit(object):
         elif 2 == type:
             log_handlers.append(logging.FileHandler(file_path, 'a'))
 
+        # 自定义格式化程序，去掉文件名的扩展名
+        # class CustomFormatter(logging.Formatter):
+        #     def format(self, record):
+        #         record.filename = os.path.splitext(record.filename)[0]
+        #         return super().format(record)
+
+        record_format = '[%(asctime)s.%(msecs)03d][%(levelname)s][%(filename)s][%(lineno)03d] %(message)s'
+        date_format = '%m%d %H:%M:%S'
         logging.basicConfig(
             level=logging.INFO,
-            format='%(asctime)s-%(filename)s:[%(lineno)d]-%(funcName)s-%(levelname)s - %(message)s',
-            datefmt='%Y_%m_%d %H:%M:%S',
+            format=record_format,
+            datefmt=date_format,
             handlers=log_handlers
         )
+
+        # # 设置自定义格式化程序
+        # formatter = CustomFormatter(record_format, datefmt=date_format)
+        # for handler in logging.getLogger().handlers:
+        #     handler.setFormatter(formatter)

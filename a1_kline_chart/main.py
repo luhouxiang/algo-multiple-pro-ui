@@ -11,6 +11,6 @@ from cfg import g_cfg
 
 
 if __name__ == '__main__':
-    SysLogInit('a1_kline_chart', '../logs/a1_kline_chart')
+    SysLogInit('a1_kline_chart', 'logs/a1_kline_chart')
     g_cfg.load_yaml()   # 默认最先加载配置文件
     logging.info("work begin...")
