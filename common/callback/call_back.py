@@ -61,13 +61,14 @@ def fn_calc_volumes(klines: list[KLine]):
 def fn_calc_up_lower_upper(klines: List[KLine]):
     lower = Cal_LOWER(klines, 0, len(klines)-1)
     upper = Cal_UPPER(klines, 0, len(klines)-1)
+    # upper = [0] * len(klines)
     merge = {}
     for i in range(len(lower)):
         dt = datetime.fromtimestamp(klines[i].time)
         if lower[i]:
             merge[dt] = [dt, -1]
-        elif upper[i]:
-            merge[i] = [dt, 1]
+        # elif upper[i]:
+        #     merge[i] = [dt, 1]
     return merge
 
 

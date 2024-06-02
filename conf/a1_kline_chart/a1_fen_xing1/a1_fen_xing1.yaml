@@ -24,5 +24,12 @@ plots:
     chart_item:
     -
       file_name: ""
+      func_name: fn_calc_volumes
+      type: Volume
+  -
+    max_height: 120
+    chart_item:
+    -
+      file_name: ""
       func_name: fn_calc_up_lower_upper
       type: Signal
