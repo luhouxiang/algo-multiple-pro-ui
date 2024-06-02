@@ -5,7 +5,7 @@ import sys
 work_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.chdir(work_dir)     # 设定指定目录为工作目录
 sys.path.append(work_dir)
-from common.loggin_cfg import SysLogInit
+from common.logging_cfg import SysLogInit
 from common.ui_main_window import MainWindow, app
 import logging
 from cfg import g_cfg

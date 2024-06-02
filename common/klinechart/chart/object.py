@@ -2,7 +2,7 @@
 Basic data structure used for general trading function in the trading platform.
 """
 from __future__ import annotations
-import datetime
+from datetime import datetime
 from typing import List, Dict, NewType, Tuple
 from enum import Enum
 
@@ -24,23 +24,23 @@ class DataItem(list):
             return
         arr = txt.split(",")
         if not data_type:
-            arr = [float(arr[i]) if i > 0 else datetime.datetime.strptime(arr[0], "%Y-%m-%d %H:%M:%S") for i in
+            arr = [float(arr[i]) if i > 0 else datetime.strptime(arr[0], "%Y-%m-%d %H:%M:%S") for i in
                    range(0, len(arr))]
         else:
             for i in range(len(arr)):
                 if data_type[i] == "datetime":
-                    arr[i] = datetime.datetime.strptime(arr[i], "%Y-%m-%d %H:%M:%S")
+                    arr[i] = datetime.strptime(arr[i], "%Y-%m-%d %H:%M:%S")
                 elif data_type[i] == "float":
                     arr[i] = float(arr[i])
         self.extend(arr)
 
     def init_kline(self, kline):
-        arr = [datetime.datetime.fromtimestamp(kline.time), kline.open, kline.high, kline.low, kline.close]
+        arr = [datetime.fromtimestamp(kline.time), kline.open, kline.high, kline.low, kline.close]
         self.extend(arr)
         return self
 
     def init_line(self, lines):
-        arr = [lines[i] if i > 0 else datetime.datetime.strptime(lines[0], "%Y-%m-%d %H:%M:%S") for i in
+        arr = [lines[i] if i > 0 else datetime.strptime(lines[0], "%Y-%m-%d %H:%M:%S") for i in
                range(0, len(lines))]
         self.extend(arr)
         return self
