@@ -9,6 +9,9 @@ from common.logging_cfg import SysLogInit
 from common.ui_main_window import MainWindow, app
 import logging
 from cfg import g_cfg
+from common.http.httpserver import PyHttpServer
+
+
 
 
 if __name__ == '__main__':
@@ -18,6 +21,8 @@ if __name__ == '__main__':
     logging.error("abcd")
     logger = logging.getLogger(__name__)
     logger.info("color test...")
+    PyHttpServer().start()
+
     w = MainWindow(g_cfg.conf)
     w.resize(1024, 768)
     w.show()
