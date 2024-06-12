@@ -30,7 +30,7 @@ def fn_calc_ma20_60(klines: list[KLine]):
 def fn_calc_wei_bi(klines: list[KLine]) -> List[Any]:
     """回调计算过程"""
     wbs = get_weibi_list(klines, N=5)
-    logging.info(wbs)
+    # logging.info(wbs)
     items = []
     for w in wbs:
         p1 = w.low if w.direction == Direction.Up else w.high
@@ -67,6 +67,8 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
         dt = datetime.fromtimestamp(klines[i].time)
         if lower[i]:
             merge[dt] = [dt, -1]
+        else:
+            merge[dt] = [dt, None]
         # elif upper[i]:
         #     merge[i] = [dt, 1]
     return merge

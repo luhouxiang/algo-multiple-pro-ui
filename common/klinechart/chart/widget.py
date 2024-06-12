@@ -27,9 +27,11 @@ class EAlignType(Enum): # 对齐方式
 
 
 class ChartWidget(pg.PlotWidget):
-    """"""
-    MIN_BAR_COUNT = 5
-    NORMAL_BAR_COUNT = 100
+    """
+    绘制和操作K线图类
+    """
+    MIN_BAR_COUNT = 5   # 最小K线数
+    NORMAL_BAR_COUNT = 100  # 默认显示的K线数
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         """"""
@@ -38,14 +40,16 @@ class ChartWidget(pg.PlotWidget):
         self.manager: BarManager = BarManager()
 
         self._plots: List[pg.PlotItem] = []
-        self._plot_charts_dict: Dict[PlotIndex, List[ChartBase]] = {}
+        self._plot_charts_dict: Dict[PlotIndex, List[ChartBase]] = {}  # 通过PlotIndex可以找到对应这个区域的所有实例
+
+        # 每一个chart_item实例对应plot_item, 一个plot_item会加载若干个chart_item实例，plot_item存于self._plots
         self._item_plot_map: Dict[ChartBase, pg.PlotItem] = {}
 
         self._first_plot: pg.PlotItem = None
         self._cursor: ChartCursor = None
 
-        self._right_ix: int = 0                     # Index of most right data
-        self._bar_count: int = self.NORMAL_BAR_COUNT   # Total bar visible in chart
+        self._right_ix: int = 0                     # 最右边K线的数据索引
+        self._bar_count: int = self.NORMAL_BAR_COUNT   # 图表中可见K线数量
 
         self._init_ui()
 
@@ -61,7 +65,10 @@ class ChartWidget(pg.PlotWidget):
         #     event.ignore()
 
     def _init_ui(self) -> None:
-        """"""
+        """
+        设置窗口标题，创建并配置图形布局，
+        设置边距，间距和边框颜色
+        """
         self.setWindowTitle("kline-chart")
 
         self._layout = pg.GraphicsLayout()
@@ -75,7 +82,9 @@ class ChartWidget(pg.PlotWidget):
         return DatetimeAxis(self.manager, orientation='bottom')
 
     def add_cursor(self) -> None:
-        """"""
+        """
+        添加光标方法
+        """
         if not self._cursor:
             self._cursor = ChartCursor(
                 self, self.manager, self._plots, self._item_plot_map)
@@ -88,6 +97,7 @@ class ChartWidget(pg.PlotWidget):
     ) -> None:
         """
         Add plot area.
+        添加绘图区域方法
         """
         # Create plot object
         plot = pg.PlotItem(axisItems={'bottom': self._get_new_x_axis()})
@@ -138,16 +148,17 @@ class ChartWidget(pg.PlotWidget):
     ):
         """
         Add chart item.
+        添加图表项目方法，用于在特定绘图区域添加图表项目
         """
         chart_index = 0 if layout_index not in self._plot_charts_dict else len(self._plot_charts_dict)
-        item = item_class(layout_index, chart_index, self.manager)
+        chart_item = item_class(layout_index, chart_index, self.manager)
         if layout_index not in self._plot_charts_dict:
             self._plot_charts_dict[layout_index] = []
-        self._plot_charts_dict[layout_index].append(item)
-        plot = self._plots[layout_index]
-        plot.addItem(item)
+        self._plot_charts_dict[layout_index].append(chart_item)
+        plot_item = self._plots[layout_index]
+        plot_item.addItem(chart_item)
 
-        self._item_plot_map[item] = plot
+        self._item_plot_map[chart_item] = plot_item
 
     def get_plot(self, plot_index: int) -> pg.PlotItem:
         """
@@ -157,7 +168,7 @@ class ChartWidget(pg.PlotWidget):
 
     def get_all_plots(self) -> List[pg.PlotItem]:
         """
-        Get all plot objects.
+        获取所有绘图区域方法
         """
         return self._plots
 
@@ -348,7 +359,9 @@ class ChartWidget(pg.PlotWidget):
 
 
 class ChartCursor(QtCore.QObject):
-    """"""
+    """
+    光标类
+    """
 
     def __init__(
         self,
@@ -453,6 +466,7 @@ class ChartCursor(QtCore.QObject):
     def _mouse_moved(self, evt: tuple) -> None:
         """
         Callback function when mouse is moved.
+        鼠标移动事件处理方法
         """
         if not self._manager.get_count():
             return
@@ -515,7 +529,7 @@ class ChartCursor(QtCore.QObject):
             else:
                 label.hide()
 
-        dt = self._manager.get_datetime(self._x)
+        dt = self._manager.get_dt_from_index(self._x)
         if dt:
             self._x_label.setText(dt.strftime("%Y-%m-%d %H:%M:%S"))
             self._x_label.show()

@@ -11,7 +11,7 @@ def hello_world(request):
 
 def process_abnormal():
     with Configurator() as config:
-        config.add_route('hello', '/')
+        config.add_route('hello', '/hello_world')
         config.add_view(hello_world, route_name='hello')
         app = config.make_wsgi_app()
     server = make_server('0.0.0.0', 8081, app)

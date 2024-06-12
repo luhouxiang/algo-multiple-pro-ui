@@ -15,6 +15,14 @@ class ChartSignal(ChartBase):
         """"""
         super().__init__(layout_index, chart_index, manager)
 
+    # def get_y_range(self, min_ix: int = None, max_ix: int = None) -> Tuple[float, float]:
+    #     """
+    #     Get range of y-axis with given x-axis range.
+    #
+    #     If min_ix and max_ix not specified, then return range with whole data set.
+    #     """
+    #     min_value, max_value = self._manager.get_layout_range(self._layout_index, min_ix, max_ix)
+    #     return min_value, max_value
     def get_y_range(self, min_ix: int = None, max_ix: int = None) -> Tuple[float, float]:
         """
         Get range of y-axis with given x-axis range.
@@ -22,8 +30,8 @@ class ChartSignal(ChartBase):
         If min_ix and max_ix not specified, then return range with whole data set.
         """
         min_value, max_value = self._manager.get_layout_range(self._layout_index, min_ix, max_ix)
+        logging.info("get_y_range::min_max_value:【{}，{}】".format(min_value, max_value))
         return min_value, max_value
-
     def _draw_bar_picture(self, ix: int, old_bar: DataItem, bar: DataItem) -> QtGui.QPicture:
         """"""
         # Create objects
@@ -33,21 +41,20 @@ class ChartSignal(ChartBase):
         # Set painter color
         # if bar.close_price >= bar.open_price:
         if bar:
-            if bar[1] > 0:
-                painter.setPen(self._up_pen)
-                painter.setBrush(self._up_brush)
-            else:
-                painter.setPen(self._down_pen)
-                painter.setBrush(self._down_brush)
-
-            rect = QtCore.QRectF(
-                ix - BAR_WIDTH,
-                0,
-                BAR_WIDTH * 2,
-                bar[1]
-            )
-            painter.drawRect(rect)
-
+            # if bar[1] > 0:
+            #     painter.setPen(self._up_pen)
+            #     painter.setBrush(self._up_brush)
+            # else:
+            painter.setPen(self._down_pen)
+            painter.setBrush(self._down_brush)
+            if bar[1]:
+                rect = QtCore.QRectF(
+                    ix - BAR_WIDTH,
+                    0,
+                    BAR_WIDTH * 2,
+                    bar[1]
+                )
+                painter.drawRect(rect)
         # Finish
         painter.end()
         return volume_picture
@@ -60,7 +67,7 @@ class ChartSignal(ChartBase):
 
         if bar:
             text = f"signal: {bar[1]}"
-            logging.info(f"signal: {bar[1]}")
+            # logging.info(f"signal: {bar[1]}")
         else:
             text = "signal: -"
 

@@ -7,6 +7,9 @@ from typing import List, Dict, NewType, Tuple
 from enum import Enum
 
 
+TIndex = int
+
+
 class DataItem(list):
     """ 表格数据
     如果输入数据类似如下：‘2022-01-14 22:16:00,4625.0,4626.0,4621.0,4622.0’

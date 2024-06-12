@@ -30,7 +30,7 @@ class DatetimeAxis(pg.AxisItem):    # 下部时间坐标
         strings = []
 
         for ix in values:
-            dt = self._manager.get_datetime(ix)
+            dt = self._manager.get_dt_from_index(ix)
 
             if not dt:
                 s = ""
