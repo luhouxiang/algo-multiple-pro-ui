@@ -63,10 +63,13 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
     upper = Cal_UPPER(klines, 0, len(klines)-1)
     # upper = [0] * len(klines)
     merge = {}
+    logging.info(f"分型,顶底数量: {len(lower)}")
     for i in range(len(lower)):
         dt = datetime.fromtimestamp(klines[i].time)
         if lower[i]:
             merge[dt] = [dt, -1]
+            logging.info(f"顶或底的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
+
     return merge
 
 
