@@ -8,7 +8,7 @@
             "name": "Python Debugger: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "${workspaceFolder}/a1_kline_chart/a2_fen_xing1/main.py",
+            "program": "${workspaceFolder}/a1_kline_chart/a3_fen_xing/main.py",
             "console": "integratedTerminal"
         }
     ]

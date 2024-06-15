@@ -113,6 +113,11 @@ class BarManager:
                     for item in bar[1:-1]:  # bar中分别为：[时间,开，高，低，收，量],1:-1刚好去掉头尾，只算价格
                         max_price = max(max_price, item)
                         min_price = min(min_price, item)
+            elif info.type == "Volume":
+                for bar in bar_list[:]:
+                    for item in bar[1:]:
+                        max_price = max(max_price, item)
+                        min_price = min(min_price, item)
             else:
                 for bar in bar_list[:]:
                     for item in bar[1:]:
@@ -126,5 +131,12 @@ class BarManager:
             min_price = 0
         if max_price == float("-inf"):
             max_price = 1
+        if max_price == min_price:
+            if max_price == 0:
+                max_price = 1
+                min_price = -1
+            else:
+                max_price = abs(max_price) * 1.2
+                min_price = -abs(min_price) * 1.2
         self._all_ranges[layout_index][(min_ix, max_ix)] = (min_price, max_price)
         return min_price, max_price
