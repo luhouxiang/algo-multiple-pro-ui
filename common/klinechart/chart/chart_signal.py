@@ -30,7 +30,7 @@ class ChartSignal(ChartBase):
         If min_ix and max_ix not specified, then return range with whole data set.
         """
         min_value, max_value = self._manager.get_layout_range(self._layout_index, min_ix, max_ix)
-        logging.info("get_y_range::min_max_value:【{}，{}】".format(min_value, max_value))
+        # logging.info("get_y_range::min_max_value:【{}，{}】".format(min_value, max_value))
         return min_value, max_value
     def _draw_bar_picture(self, ix: int, old_bar: DataItem, bar: DataItem) -> QtGui.QPicture:
         """"""
