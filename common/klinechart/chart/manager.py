@@ -136,7 +136,7 @@ class BarManager:
                 max_price = 1
                 min_price = -1
             else:
-                max_price = abs(max_price) * 1.2
-                min_price = -abs(min_price) * 1.2
+                max_price = abs(max_price) * 1
+                min_price = -abs(min_price) * 1
         self._all_ranges[layout_index][(min_ix, max_ix)] = (min_price, max_price)
         return min_price, max_price

@@ -67,10 +67,6 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
         dt = datetime.fromtimestamp(klines[i].time)
         if lower[i]:
             merge[dt] = [dt, -1]
-        else:
-            merge[dt] = [dt, None]
-        # elif upper[i]:
-        #     merge[i] = [dt, 1]
     return merge
 
 
