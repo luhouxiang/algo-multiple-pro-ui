@@ -110,7 +110,7 @@ class BarManager:
                 continue  # 对于画直线，依附于K线图，大小不在区域范围内
             elif info.type == "Candle":  # 对于 "Candle" 类型，遍历 bar_list，更新 max_price 和 min_price。
                 for bar in bar_list[:]:
-                    for item in bar[1:-1]:
+                    for item in bar[1:-1]:  # bar中分别为：[时间,开，高，低，收，量],1:-1刚好去掉头尾，只算价格
                         max_price = max(max_price, item)
                         min_price = min(min_price, item)
             else:

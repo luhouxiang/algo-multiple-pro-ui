@@ -15,7 +15,7 @@ from common.http.httpserver import PyHttpServer
 
 
 if __name__ == '__main__':
-    SysLogInit('a1_fen_xing', 'logs/a1_kline_chart/a1_fen_xing')
+    SysLogInit('a2_fen_xing', 'logs/a1_kline_chart/a2_fen_xing')
     g_cfg.load_yaml()   # 默认最先加载配置文件
     logging.info(f"...... ...... work begin... work_dir:{work_dir}")
     logging.error("abcd")

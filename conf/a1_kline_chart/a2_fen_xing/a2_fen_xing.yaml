@@ -4,7 +4,7 @@ plots:
     max_height: 0
     chart_item:
     -
-      file_name: data/a2_fen_xing1/candle.txt
+      file_name: data/a2_fen_xing/candle.txt
       type: Candle
     -
       file_name: "均线"
