@@ -12,7 +12,7 @@ from common.algo.weibi import get_weibi_list
 from typing import List, Any
 from common.model.obj import Direction
 from common.chanlun.c_bi import Cal_LOWER
-from common.chanlun.c_bi import Cal_UPPER
+from common.chanlun.c_bi import Cal_UPPER, cal_independent_klines
 import logging
 
 def fn_calc_ma20_60(klines: list[KLine]):
@@ -62,16 +62,25 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
     lower = Cal_LOWER(klines, 0, len(klines)-1)
     upper = Cal_UPPER(klines, 0, len(klines)-1)
     # upper = [0] * len(klines)
-    merge = {}
+    fenxin = {}
     logging.info(f"分型,顶底数量: {len(lower)}")
     for i in range(len(lower)):
         dt = datetime.fromtimestamp(klines[i].time)
         if lower[i]:
-            merge[dt] = [dt, -1]
+            fenxin[dt] = [dt, -1]
             logging.info(f"顶或底的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
 
-    return merge
+    return fenxin
 
+
+def fn_calc_independent_klines(klines: list[KLine]):
+    """计算独立K线数量"""
+    combs = cal_independent_klines(klines, 0, len(klines))
+    independents = {}
+    for i in range(len(combs)):
+        dt = datetime.fromtimestamp(combs[i].data.time)
+        independents[dt] = [dt, combs[i].data.low, combs[i].data.high, combs[i].pos_begin, combs[i].pos_end, combs[i].pos_extreme]
+    return independents
 
 
 def fn_calc_bi(klines: list[KLine]) -> List[Any]:

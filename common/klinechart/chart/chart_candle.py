@@ -13,7 +13,6 @@ class ChartCandle(ChartBase):
     def __init__(self, layout_index, chart_index, manager: BarManager):
         """"""
         super().__init__(layout_index, chart_index, manager)
-        self._shadow_bursh = QtGui.QBrush(QtGui.QColor(255, 255, 0, 50))  # 半透明黄色
 
     def _draw_bar_picture(self, ix: int, old_bar: DataItem, bar: DataItem) -> QtGui.QPicture:
         """"""
@@ -53,16 +52,6 @@ class ChartCandle(ChartBase):
                 bar[4] - bar[1]
             )
             painter.drawRect(rect)
-
-        # Draw the semi-transparent yellow rectangle shadow
-        shadow_rect = QtCore.QRectF(
-            ix - BAR_WIDTH,
-            bar[3],  # Lowest price
-            BAR_WIDTH * 2,
-            bar[2] - bar[3]  # Height from low to high
-        )
-
-        painter.fillRect(shadow_rect, self._shadow_bursh)
 
         # Finish
         painter.end()

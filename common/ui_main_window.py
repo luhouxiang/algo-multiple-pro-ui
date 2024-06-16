@@ -5,7 +5,7 @@ if "PyQt5" in sys.modules:
 
 from typing import Dict, List
 from common.klinechart.chart import ChartWidget, ChartVolume, ChartCandle, ChartMacd,\
-    ChartArrow, ChartLine, ChartStraight, ChartSignal, ItemIndex
+    ChartArrow, ChartLine, ChartStraight, ChartSignal, ItemIndex, ChartShadow
 from common.klinechart.chart.object import DataItem
 from common.klinechart.chart import PlotIndex, BarDict, PlotItemInfo, ChartItemInfo
 # from common.klinechart.trader.config import conf
@@ -99,6 +99,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     widget.add_item(plot_index, ChartStraight)
                 elif chart_item["type"] == "Signal":
                     widget.add_item(plot_index, ChartSignal)
+                elif chart_item["type"] == "Shadow":
+                    widget.add_item(plot_index, ChartShadow)
                 else:
                     raise "not match item"
 

@@ -106,6 +106,8 @@ class BarManager:
 
             if info.type == "Arrow":    # 对于 "Arrow" 和 "Straight" 类型，跳过不处理。
                 continue  # 对于画箭头型的，大小不在区域范围内
+            if info.type == "Shadow":
+                continue
             elif info.type == "Straight":
                 continue  # 对于画直线，依附于K线图，大小不在区域范围内
             elif info.type == "Candle":  # 对于 "Candle" 类型，遍历 bar_list，更新 max_price 和 min_price。

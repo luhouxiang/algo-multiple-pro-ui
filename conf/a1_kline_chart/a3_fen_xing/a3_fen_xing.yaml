@@ -6,6 +6,10 @@ plots:
     -
       file_name: data/a2_fen_xing/candle.txt
       type: Candle
+    -
+      file_name: ""
+      func_name: fn_calc_independent_klines
+      type: Shadow
   -
     max_height: 120
     chart_item:
