@@ -101,10 +101,11 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
     return pLast - pBegin + 1   # 得出独立K线的数量
 
 
-def Cal_LOWER(m_pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
+def Cal_LOWER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
     """
     计算底分型
     """
+    m_pData = copy.deepcopy(pData)
     combs: List[stCombineK] = []
     for i in range(m_MinPoint, m_MaxPoint):
         data = stCombineK(m_pData[i], i, i, i, KSide.UP)
@@ -131,8 +132,9 @@ def Cal_LOWER(m_pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
     return ret
 
 
-def Cal_UPPER(m_pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
+def Cal_UPPER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
     """计算顶分型"""
+    m_pData = copy.deepcopy(pData)
     combs: List[stCombineK] = []
     for i in range(m_MinPoint, m_MaxPoint):
         data = stCombineK(m_pData[i], i, i, i, KSide.DOWN)
