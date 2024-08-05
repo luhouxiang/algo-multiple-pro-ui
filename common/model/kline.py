@@ -46,9 +46,10 @@ class stCombineK:
         self.pos_end: int = end          # 结束
         self.pos_extreme: int = base     # 最高或者最低位置,极值点位置
         self.isUp: KSide = KSide(isup)            # 是否向上
+        # print(self.isUp)
 
     def __str__(self):
-        up = "up" if self.isUp else "down"
+        up = "up" if self.isUp == KSide.UP else "down"
         return "[{}]:begin:{},end:{},base:{}".format(up, self.pos_begin, self.pos_end, self.pos_extreme)
 
     def __repr__(self):
