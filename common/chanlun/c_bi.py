@@ -50,7 +50,7 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
         combs[pLast].data.high = high
         combs[pLast].pos_end = pos_end
         combs[pLast].pos_extreme = index
-        combs[pLast].isUp = bUp
+        combs[pLast].isUp = bUp     # 这个方向在独立K线时就已经更新，此处实际上不用更新了 note by luhx 2024-8-8
 
         pPrev = pLast
         return
