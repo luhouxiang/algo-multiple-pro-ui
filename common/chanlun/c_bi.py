@@ -141,6 +141,7 @@ def Cal_LOWER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
         pNext += 1
     return ret
 
+
 def cal_independent_klines(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[stCombineK]:
     m_pData = copy.deepcopy(pData)
     combs: List[stCombineK] = []
@@ -158,6 +159,7 @@ def cal_independent_klines(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[s
                      f"o={i.data.open},h={i.data.high},l={i.data.low},c={i.data.close}")
     logging.info(f"end.{'*' * 80}")
     return arr
+
 
 def Cal_UPPER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
     """计算顶分型"""

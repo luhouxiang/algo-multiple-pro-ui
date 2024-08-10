@@ -19,8 +19,13 @@ class ChartShadow(ChartBase):
     def __init__(self, layout_index, chart_index, manager: BarManager):
         """"""
         super().__init__(layout_index, chart_index, manager)
-        self._shadow_brush = QtGui.QBrush(QtGui.QColor(255, 255, 0, 90))  # 半透明黄色
+        self._shadow_brush_up = QtGui.QBrush(QtGui.QColor(255, 100, 100, 90))  # 半透明红色
+        self._shadow_brush_down = QtGui.QBrush(QtGui.QColor(0, 200, 255, 90))  # 半透明绿色
 
+        """
+        UP_COLOR = (255, 75, 75)
+        DOWN_COLOR = (0, 255, 255)
+        """
     def _draw_bar_picture(self, ix: int, old_bar: DataItem, bar: DataItem) -> QtGui.QPicture:
         """
         DataItem: bar[0]存时间，bar[1]存最低， bar[2]存最高
@@ -31,6 +36,7 @@ class ChartShadow(ChartBase):
 
         # Draw the semi-transparent yellow rectangle shadow
         if bar:
+            cur_shadow_brush = self._shadow_brush_up if bar[-1] == 1 else self._shadow_brush_down
             count = bar[4] - bar[3] + 1
             for i in range(count):
                 if i == 0:
@@ -47,7 +53,7 @@ class ChartShadow(ChartBase):
                         (BAR_WIDTH + 0.2) * 2,
                         bar[2] - bar[1]
                     )
-                painter.fillRect(shadow_rect, self._shadow_brush)
+                painter.fillRect(shadow_rect, cur_shadow_brush)
 
         # Finish
         painter.end()

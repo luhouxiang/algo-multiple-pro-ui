@@ -79,7 +79,7 @@ def fn_calc_independent_klines(klines: list[KLine]):
     independents = {}
     for i in range(len(combs)):
         dt = datetime.fromtimestamp(combs[i].data.time)
-        independents[dt] = [dt, combs[i].data.low, combs[i].data.high, combs[i].pos_begin, combs[i].pos_end, combs[i].pos_extreme]
+        independents[dt] = [dt, combs[i].data.low, combs[i].data.high, combs[i].pos_begin, combs[i].pos_end, combs[i].pos_extreme, combs[i].isUp.value]
     return independents
 
 
