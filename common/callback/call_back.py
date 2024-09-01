@@ -68,7 +68,12 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
         dt = datetime.fromtimestamp(klines[i].time)
         if lower[i]:
             fenxin[dt] = [dt, -1]
-            logging.info(f"顶或底的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
+            logging.info(f"底的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
+    for i in range(len(upper)):
+        dt = datetime.fromtimestamp(klines[i].time)
+        if upper[i]:
+            fenxin[dt] = [dt, 1]
+            logging.info(f"顶的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
 
     return fenxin
 

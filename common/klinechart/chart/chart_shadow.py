@@ -19,8 +19,8 @@ class ChartShadow(ChartBase):
     def __init__(self, layout_index, chart_index, manager: BarManager):
         """"""
         super().__init__(layout_index, chart_index, manager)
-        self._shadow_brush_up = QtGui.QBrush(QtGui.QColor(255, 100, 100, 90))  # 半透明红色
-        self._shadow_brush_down = QtGui.QBrush(QtGui.QColor(0, 200, 255, 90))  # 半透明绿色
+        self._shadow_brush_up = QtGui.QBrush(QtGui.QColor(255, 125, 125, 120))  # 半透明红色
+        self._shadow_brush_down = QtGui.QBrush(QtGui.QColor(0, 200, 255, 120))  # 半透明绿色
 
         """
         UP_COLOR = (255, 75, 75)

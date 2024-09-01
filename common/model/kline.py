@@ -32,7 +32,6 @@ class KLine:
 class KSide(Enum):
     """K线方向
     """
-    INITIAL = 0
     UP = 1
     DOWN = -1
 

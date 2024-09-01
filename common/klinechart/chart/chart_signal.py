@@ -41,12 +41,12 @@ class ChartSignal(ChartBase):
         # Set painter color
         # if bar.close_price >= bar.open_price:
         if bar:
-            # if bar[1] > 0:
-            #     painter.setPen(self._up_pen)
-            #     painter.setBrush(self._up_brush)
-            # else:
-            painter.setPen(self._down_pen)
-            painter.setBrush(self._down_brush)
+            if bar[1] > 0:
+                painter.setPen(self._up_pen)
+                painter.setBrush(self._up_brush)
+            else:
+                painter.setPen(self._down_pen)
+                painter.setBrush(self._down_brush)
             if bar[1]:
                 rect = QtCore.QRectF(
                     ix - BAR_WIDTH,

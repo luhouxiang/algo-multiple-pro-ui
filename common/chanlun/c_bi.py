@@ -29,14 +29,11 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
     pPrev = pBegin  # 前一个独立K线的位置
     pCur = pBegin + 1           # 当前K线的位置
     pEnd = pBegin + size - 1    # 最后一个K线位置
-    # bUp = KSide.INITIAL         # 方向标志，初始化为 KSide.INITIAL
 
     def IndependentK(b_up: KSide):
         """用于处理独立K线的情况，更新标志和指针，并进行值的拷贝"""
-        # nonlocal bUp
         nonlocal pPrev
         nonlocal pLast
-        # bUp = b_up
         pPrev = pCur
         pLast += 1  # 每处理一根独立K线，pLast增加1
         combs[pLast] = copy.deepcopy(combs[pCur])    # 值的拷贝，而不是指针, 总是拷贝第一个
@@ -50,7 +47,6 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
         combs[pLast].data.high = high
         combs[pLast].pos_end = pos_end
         combs[pLast].pos_extreme = index
-        # combs[pLast].isUp = bUp     # 这个方向在独立K线时就已经更新，此处实际上不用更新了 note by luhx 2024-8-8
 
         pPrev = pLast
         return
@@ -143,6 +139,9 @@ def Cal_LOWER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
 
 
 def cal_independent_klines(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[stCombineK]:
+    """
+    计算出独立K线
+    """
     m_pData = copy.deepcopy(pData)
     combs: List[stCombineK] = []
     for i in range(m_MinPoint, m_MaxPoint):
