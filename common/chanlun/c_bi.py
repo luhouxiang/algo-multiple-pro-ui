@@ -106,17 +106,7 @@ def Cal_LOWER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
     """
     计算底分型
     """
-    # m_pData = copy.deepcopy(pData)
-    # combs: List[stCombineK] = []
-    # for i in range(m_MinPoint, m_MaxPoint):
-    #     data = stCombineK(m_pData[i], i, i, i, KSide.UP)
-    #     combs.append(data)
-    # nCount = _Cal_MERGE(combs)
-    # ret = [False] * len(combs)
-    #
-    # if nCount <= 2:  # 小于等于2的，直接退出
-    #     return ret
-    ret = [False] * (m_MaxPoint-m_MinPoint)
+    ret = [False] * (m_MaxPoint-m_MinPoint+1)
     combs = cal_independent_klines(pData, m_MinPoint, m_MaxPoint)
     nCount = len(combs)
     if nCount <= 2:  # 小于等于2的，直接退出
@@ -164,7 +154,7 @@ def Cal_UPPER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
     """计算顶分型"""
     m_pData = copy.deepcopy(pData)
     combs: List[stCombineK] = []
-    for i in range(m_MinPoint, m_MaxPoint):
+    for i in range(m_MinPoint, m_MaxPoint+1):
         data = stCombineK(m_pData[i], i, i, i, KSide.DOWN)
         combs.append(data)
     nCount = _Cal_MERGE(combs)
