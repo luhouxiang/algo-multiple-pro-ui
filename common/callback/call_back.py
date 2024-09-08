@@ -59,19 +59,19 @@ def fn_calc_volumes(klines: list[KLine]):
 
 
 def fn_calc_up_lower_upper(klines: List[KLine]):
-    lower = Cal_LOWER(klines, 0, len(klines)-1)
-    upper = Cal_UPPER(klines, 0, len(klines)-1)
+    lower = Cal_LOWER(klines, 0, len(klines))
+    upper = Cal_UPPER(klines, 0, len(klines))
     # upper = [0] * len(klines)
     fenxin = {}
     logging.info(f"分型,顶底数量: {len(lower)}")
     for i in range(len(lower)):
         dt = datetime.fromtimestamp(klines[i].time)
-        if lower[i]:
+        if lower[i][0]:
             fenxin[dt] = [dt, -1]
             logging.info(f"底的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
     for i in range(len(upper)):
         dt = datetime.fromtimestamp(klines[i].time)
-        if upper[i]:
+        if upper[i][0]:
             fenxin[dt] = [dt, 1]
             logging.info(f"顶的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
 

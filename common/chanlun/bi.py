@@ -3,9 +3,11 @@
 笔
 """
 from multipledispatch import dispatch   # 模拟C++函数重载功能
-from model.kline import KLine, stCombineK
-from typing import List, Any
-from chanlun.float_compare import *
+# from model.kline import KLine, stCombineK
+from typing import List, Any, Tuple
+from common.model.kline import KLine
+from common.chanlun.float_compare import *
+from common.model.kline import KLine, stCombineK, KSide
 
 
 def getNode(base, temp: List[int], merge: List[KLine], type: Trait):
@@ -191,7 +193,7 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
     return pLast - pBegin + 1
 
 
-def Cal_UPPER(m_pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
+def Cal_UPPER(m_pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[Tuple[bool,float,float]]:
     combs: List[stCombineK] = []
     for i in range(m_MinPoint, m_MaxPoint):
         data = stCombineK(m_pData[i], i, i, i, False)

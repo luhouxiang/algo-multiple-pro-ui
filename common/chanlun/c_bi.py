@@ -13,6 +13,7 @@ from common.chanlun.float_compare import *
 import copy
 import logging
 from datetime import datetime
+from typing import Tuple
 
 def _Cal_MERGE(combs: List[stCombineK]) -> int:
     """
@@ -102,11 +103,11 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
     return pLast - pBegin + 1   # 得出独立K线的数量
 
 
-def Cal_LOWER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
+def Cal_LOWER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[Tuple[bool,float,float]]:
     """
     计算底分型
     """
-    ret = [False] * (m_MaxPoint-m_MinPoint+1)
+    ret = [[False, 0.0, 0.0]] * (m_MaxPoint-m_MinPoint)
     combs = cal_independent_klines(pData, m_MinPoint, m_MaxPoint)
     nCount = len(combs)
     if nCount <= 2:  # 小于等于2的，直接退出
@@ -121,11 +122,67 @@ def Cal_LOWER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
                 less_than_0(combs[pCur].data.high - combs[pNext].data.high) and
                 less_than_0(combs[pCur].data.low - combs[pPrev].data.low) and
                 less_than_0(combs[pCur].data.low - combs[pNext].data.low)):
-            ret[combs[pCur].pos_extreme] = True
+            ret[combs[pCur].pos_extreme] = [True, combs[pCur].data.low, combs[pCur].data.high]
+
         pPrev += 1
         pCur += 1
         pNext += 1
     return ret
+
+
+
+def Cal_UPPER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[Tuple[bool,float,float]]:
+    """计算顶分型"""
+    m_pData = copy.deepcopy(pData)
+    combs: List[stCombineK] = []
+    for i in range(m_MinPoint, m_MaxPoint):
+        data = stCombineK(m_pData[i], i, i, i, KSide.DOWN)
+        combs.append(data)
+    nCount = _Cal_MERGE(combs)
+    ret = [[False, 0.0, 0.0]] * len(combs)
+    if nCount <= 2:
+        return ret
+
+    pPrev = 0
+    pCur = pPrev + 1
+    pNext = pCur + 1
+    pEnd = pPrev + nCount - 1
+    while pNext <= pEnd:
+        if (greater_than_0(combs[pCur].data.high - combs[pPrev].data.high) and
+                greater_than_0(combs[pCur].data.high - combs[pNext].data.high) and
+                greater_than_0(combs[pCur].data.low - combs[pPrev].data.low) and
+                greater_than_0(combs[pCur].data.low - combs[pNext].data.low)):
+            ret[combs[pCur].pos_extreme] = [True, combs[pCur].data.low, combs[pCur].data.high]
+
+        pPrev += 1
+        pCur += 1
+        pNext += 1
+    return ret
+
+
+def Cal_BI(lower: List[Tuple[bool, float, float]], upper: List[Tuple[bool, float, float]]) -> List[Tuple[int, float, float]]:
+    """
+    计算笔：
+    笔，必须是一顶一底，而且顶和底之间至少有一个 K 线不属于顶分型与底分型，还有一个最显然的，就是在同一笔中，
+    顶分型中最高那 K 线的区间至少要有一部分高于底分型中最低那 K 线的区间，如果这条都不满足，也就是顶都在底的范围内或顶比底还低，
+    这显然是不可接受的。算法：
+    一、确定所有符合标准的分型。
+    二、如果前后两分型是同一性质的，对于顶，前面的低于后面的，只保留后面的，前面那个可以X 掉；对于底，前面的高于后面的，
+    只保留后面的，前面那个可以 X 掉。不满足上面情况的，例如相等的，都可以先保留。
+    三、经过步骤二的处理后，余下的分型，如果相邻的是顶和底，那么这就可以划为一笔。如果相邻的性质一样，那么必然有前顶不低于后顶，
+    前底不高于后底，而在连续的顶后，必须会出现新的底，把这连续的顶中最先一个，和这新出现的底连在一起，就是新的一笔，而中间的那些顶，
+    都 X 掉；在连续的底后，必须会出现新的顶，把这连续的底中最先一个，和这新出现的顶连在一起，就是新的一笔，而中间的那些底，都 X 掉。
+    显然，经过上面的三个步骤，所有的笔都可以唯一地划分出来。
+    """
+    ret = [[0, 0.0, 0.0]] * len(lower)
+    for i in range(len(lower)):
+        if lower[i][0]:
+            ret[i] = [-1, lower[i][1], lower[i][2]]
+    for i in range(len(upper)):
+        if upper[i][0]:
+            ret[i] = [+1, upper[i][1], upper[i][2]]
+    # 组合成顶底分型的逻辑
+
 
 
 def cal_independent_klines(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[stCombineK]:
@@ -148,34 +205,6 @@ def cal_independent_klines(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[s
                      f"o={i.data.open},h={i.data.high},l={i.data.low},c={i.data.close}")
     logging.info(f"end.{'*' * 80}")
     return arr
-
-
-def Cal_UPPER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
-    """计算顶分型"""
-    m_pData = copy.deepcopy(pData)
-    combs: List[stCombineK] = []
-    for i in range(m_MinPoint, m_MaxPoint+1):
-        data = stCombineK(m_pData[i], i, i, i, KSide.DOWN)
-        combs.append(data)
-    nCount = _Cal_MERGE(combs)
-    ret = [False] * len(combs)
-    if nCount <= 2:
-        return ret
-
-    pPrev = 0
-    pCur = pPrev + 1
-    pNext = pCur + 1
-    pEnd = pPrev + nCount - 1
-    while pNext <= pEnd:
-        if (greater_than_0(combs[pCur].data.high - combs[pPrev].data.high) and
-                greater_than_0(combs[pCur].data.high - combs[pNext].data.high) and
-                greater_than_0(combs[pCur].data.low - combs[pPrev].data.low) and
-                greater_than_0(combs[pCur].data.low - combs[pNext].data.low)):
-            ret[combs[pCur].pos_extreme] = True     # 顶分型
-        pPrev += 1
-        pCur += 1
-        pNext += 1
-    return ret
 
 
 def pre_(klines: List[KLine], base: int) -> int:
