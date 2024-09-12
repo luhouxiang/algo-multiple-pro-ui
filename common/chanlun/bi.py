@@ -193,9 +193,9 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
     return pLast - pBegin + 1
 
 
-def Cal_UPPER(m_pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[Tuple[bool,float,float]]:
+def Cal_UPPER(m_pData: List[KLine]) -> List[Tuple[bool,float,float]]:
     combs: List[stCombineK] = []
-    for i in range(m_MinPoint, m_MaxPoint):
+    for i in range(len(m_pData)):
         data = stCombineK(m_pData[i], i, i, i, False)
         combs.append(data)
 
@@ -219,9 +219,9 @@ def Cal_UPPER(m_pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[Tuple[bool,f
     return ret
 
 
-def Cal_LOWER(m_pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[bool]:
+def Cal_LOWER(m_pData: List[KLine]) -> List[bool]:
     klines: List[stCombineK] = []
-    for i in range(m_MinPoint, m_MaxPoint):
+    for i in range(len(m_pData)):
         data = stCombineK(m_pData[i], i, i, i, True)
         klines.append(data)
 

@@ -59,8 +59,8 @@ def fn_calc_volumes(klines: list[KLine]):
 
 
 def fn_calc_up_lower_upper(klines: List[KLine]):
-    lower = Cal_LOWER(klines, 0, len(klines))
-    upper = Cal_UPPER(klines, 0, len(klines))
+    lower = Cal_LOWER(klines)
+    upper = Cal_UPPER(klines)
     # upper = [0] * len(klines)
     fenxin = {}
     logging.info(f"分型,顶底数量: {len(lower)}")
@@ -80,7 +80,7 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
 
 def fn_calc_independent_klines(klines: list[KLine]):
     """计算独立K线数量"""
-    combs = cal_independent_klines(klines, 0, len(klines))
+    combs = cal_independent_klines(klines)
     independents = {}
     for i in range(len(combs)):
         dt = datetime.fromtimestamp(combs[i].data.time)

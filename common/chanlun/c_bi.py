@@ -13,7 +13,8 @@ from common.chanlun.float_compare import *
 import copy
 import logging
 from datetime import datetime
-from typing import Tuple
+from typing import Tuple, Dict
+
 
 def _Cal_MERGE(combs: List[stCombineK]) -> int:
     """
@@ -103,12 +104,12 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
     return pLast - pBegin + 1   # 得出独立K线的数量
 
 
-def Cal_LOWER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[Tuple[bool,float,float]]:
+def Cal_LOWER(pData: List[KLine]) -> List[Tuple[bool, float, float]]:
     """
     计算底分型
     """
-    ret = [[False, 0.0, 0.0]] * (m_MaxPoint-m_MinPoint)
-    combs = cal_independent_klines(pData, m_MinPoint, m_MaxPoint)
+    ret = [[False, 0.0, 0.0]] * len(pData)
+    combs = cal_independent_klines(pData)
     nCount = len(combs)
     if nCount <= 2:  # 小于等于2的，直接退出
         return ret
@@ -131,11 +132,11 @@ def Cal_LOWER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[Tuple[bool,flo
 
 
 
-def Cal_UPPER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[Tuple[bool,float,float]]:
+def Cal_UPPER(pData: List[KLine]) -> List[Tuple[bool,float,float]]:
     """计算顶分型"""
     m_pData = copy.deepcopy(pData)
     combs: List[stCombineK] = []
-    for i in range(m_MinPoint, m_MaxPoint):
+    for i in range(len(pData)):
         data = stCombineK(m_pData[i], i, i, i, KSide.DOWN)
         combs.append(data)
     nCount = _Cal_MERGE(combs)
@@ -160,7 +161,9 @@ def Cal_UPPER(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[Tuple[bool,flo
     return ret
 
 
-def Cal_BI(lower: List[Tuple[bool, float, float]], upper: List[Tuple[bool, float, float]]) -> List[Tuple[int, float, float]]:
+def Cal_BI(lower: List[Tuple[bool, float, float]],
+           upper: List[Tuple[bool, float, float]],
+           combs: List[stCombineK]) -> List[Tuple[int, float, float]]:
     """
     计算笔：
     笔，必须是一顶一底，而且顶和底之间至少有一个 K 线不属于顶分型与底分型，还有一个最显然的，就是在同一笔中，
@@ -181,22 +184,29 @@ def Cal_BI(lower: List[Tuple[bool, float, float]], upper: List[Tuple[bool, float
     for i in range(len(upper)):
         if upper[i][0]:
             ret[i] = [+1, upper[i][1], upper[i][2]]
+    yin: Dict[int, int] = {}
+    for i in range(len(combs)):
+        for j in range(combs[i].pos_begin, combs[i].pos_end+1):
+            yin[j] = i  # 表达出索引pos_begin至pos_end实际上是第i根独立K线
+
+
+
     # 组合成顶底分型的逻辑
 
 
 
-def cal_independent_klines(pData: List[KLine], m_MinPoint, m_MaxPoint) -> List[stCombineK]:
+def cal_independent_klines(pTmpData: List[KLine]) -> List[stCombineK]:
     """
-    计算出独立K线
+    计算出独立K线,返回独立K线对象列表
     """
-    m_pData = copy.deepcopy(pData)
+    pData = copy.deepcopy(pTmpData)
     combs: List[stCombineK] = []
-    for i in range(m_MinPoint, m_MaxPoint):
-        data = stCombineK(m_pData[i], i, i, i, KSide.DOWN)
+    for i in range(len(pData)):
+        data = stCombineK(pData[i], i, i, i, KSide.DOWN)
         combs.append(data)
     nCount = _Cal_MERGE(combs)
     if nCount <= 2:
-        return []
+        return combs[:nCount]
     arr = combs[:nCount]
     logging.info(f"begin...{'*' * 80}")
     for i in arr:
