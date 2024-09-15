@@ -67,16 +67,18 @@ class stFxK:
     """
     K线分型，顶或是底
     """
-    def __init__(self):
-        self.side: KExtreme = KExtreme.NORMAL   # 顶或是底， 0表示非顶或是非底
-        self.highest: float = 0.0
-        self.lowest: float = 0.0
+    def __init__(self, index: int, side: KExtreme, low: float, high: float):
+        self.index: int = index
+        self.side: KExtreme = side   # 顶或是底， 0表示非顶或是非底
+        self.lowest: float = low
+        self.highest: float = high
         self.independent_kline: stCombineK = None    # 顶或是底中独立K线
 
+
     def __str__(self):
-        bottom_str = f"⬉⬈:{self.lowest:.2f}"
-        top_str = f"⬋⬊: {self.highest:.2f}"
-        normal_str = f"{self.lowest}⬅⮕{self.highest}"
+        bottom_str = f"⬉⬈[{self.index}]:{self.lowest:.2f}"
+        top_str = f"⬋⬊[{self.index}]: {self.highest:.2f}"
+        normal_str = f"[{self.index}]⬅⮕{self.lowest} : {self.highest}"
         if self.side == KExtreme.BOTTOM:
             return bottom_str
         elif self.side == KExtreme.TOP:

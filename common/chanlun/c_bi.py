@@ -7,7 +7,7 @@
 2 合并K线：2根有包含关系的K线，如果方向向下，则取其中高点中的低点作为新K线高点，取其中低点中的低点作为新K线低点，由此合并出一根新K线。
 如果方向向上，则取其中高点中的高点作为新K线高点，取其中低点中的高点作为新K线低点，由此合并出一根新K线。
 """
-from common.model.kline import KLine, stCombineK, KSide, stBiK
+from common.model.kline import KLine, stCombineK, KSide, stFxK, stBiK, KExtreme
 from typing import List, Any
 from common.chanlun.float_compare import *
 import copy
@@ -161,8 +161,8 @@ def Cal_UPPER(pData: List[KLine]) -> List[Tuple[bool,float,float]]:
     return ret
 
 
-def Cal_BI(lower: List[Tuple[bool, float, float]],
-           upper: List[Tuple[bool, float, float]],
+def Cal_BI(lower: List[stFxK],
+           upper: List[stFxK],
            combs: List[stCombineK]) -> List[stBiK]:
     """
     计算笔：给出底分型，顶分型有独立K线列表，返回笔列表
@@ -181,13 +181,13 @@ def Cal_BI(lower: List[Tuple[bool, float, float]],
         """计算独立K线数"""
         return yin[e] - yin[b] + 1
 
-    ret = [[0, 0.0, 0.0]] * len(lower)
+    ret = [stFxK(index=i, side=KExtreme.NORMAL, low=0.0, high=0.0) for i in len(lower)]
     for i in range(len(lower)):
-        if lower[i][0]:
-            ret[i] = [-1, lower[i][1], lower[i][2]]
+        if lower[i].side == KExtreme.BOTTOM:
+            ret[i] = stFxK(i, KExtreme.BOTTOM, lower[i].lowest, lower[i].highest)
     for i in range(len(upper)):
-        if upper[i][0]:
-            ret[i] = [+1, upper[i][1], upper[i][2]]
+        if upper[i].side == KExtreme.TOP:
+            ret[i] = stFxK(i, KExtreme.TOP, upper[i].lowest, upper[i].highest)
     yin: Dict[int, int] = {}
     for i in range(len(combs)):
         for j in range(combs[i].pos_begin, combs[i].pos_end+1):
