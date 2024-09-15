@@ -32,8 +32,9 @@ class KLine:
 class KSide(Enum):
     """K线方向
     """
-    UP = 1
-    DOWN = -1
+    UP = 1      # 向上
+    DOWN = -1   # 向下
+    Init = 0    # 不确定
 
 
 class stCombineK:
@@ -50,6 +51,36 @@ class stCombineK:
     def __str__(self):
         up = "up" if self.isUp == KSide.UP else "down"
         return "[{}]:begin:{},end:{},base:{}".format(up, self.pos_begin, self.pos_end, self.pos_extreme)
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class stBiK:
+    """
+    K线笔类
+    """
+    def __init__(self):
+        self.pos_begin: int = 0 # 开始
+        self.pos_end: int = 0   # 结束
+        self.top: stCombineK = None     # 顶
+        self.bottom: stCombineK = None  # 底
+        self.highest: float = 0.0   # 最高
+        self.lowest: float = 0.0    # 最低
+        self.side: KSide = KSide.Init
+
+    def __str__(self):
+        up_str = f"{self.lowest}➚{self.highest}"
+        down_str = f"{self.highest}➘ {self.top}"
+        init_str = f"{self.lowest} || {self.highest}"
+        if self.side == KSide.UP:
+            show = up_str
+        elif self.side == KSide.DOWN:
+            show = down_str
+        else:
+            show = init_str
+
+        return show
 
     def __repr__(self):
         return self.__str__()

@@ -7,7 +7,7 @@
 2 合并K线：2根有包含关系的K线，如果方向向下，则取其中高点中的低点作为新K线高点，取其中低点中的低点作为新K线低点，由此合并出一根新K线。
 如果方向向上，则取其中高点中的高点作为新K线高点，取其中低点中的高点作为新K线低点，由此合并出一根新K线。
 """
-from common.model.kline import KLine, stCombineK, KSide
+from common.model.kline import KLine, stCombineK, KSide, stBiK
 from typing import List, Any
 from common.chanlun.float_compare import *
 import copy
@@ -163,9 +163,9 @@ def Cal_UPPER(pData: List[KLine]) -> List[Tuple[bool,float,float]]:
 
 def Cal_BI(lower: List[Tuple[bool, float, float]],
            upper: List[Tuple[bool, float, float]],
-           combs: List[stCombineK]) -> List[Tuple[int, float, float]]:
+           combs: List[stCombineK]) -> List[stBiK]:
     """
-    计算笔：
+    计算笔：给出底分型，顶分型有独立K线列表，返回笔列表
     笔，必须是一顶一底，而且顶和底之间至少有一个 K 线不属于顶分型与底分型，还有一个最显然的，就是在同一笔中，
     顶分型中最高那 K 线的区间至少要有一部分高于底分型中最低那 K 线的区间，如果这条都不满足，也就是顶都在底的范围内或顶比底还低，
     这显然是不可接受的。算法：
@@ -177,6 +177,10 @@ def Cal_BI(lower: List[Tuple[bool, float, float]],
     都 X 掉；在连续的底后，必须会出现新的顶，把这连续的底中最先一个，和这新出现的顶连在一起，就是新的一笔，而中间的那些底，都 X 掉。
     显然，经过上面的三个步骤，所有的笔都可以唯一地划分出来。
     """
+    def count_independent_kline(b: int, e: int) -> int:
+        """计算独立K线数"""
+        return yin[e] - yin[b] + 1
+
     ret = [[0, 0.0, 0.0]] * len(lower)
     for i in range(len(lower)):
         if lower[i][0]:
@@ -188,6 +192,11 @@ def Cal_BI(lower: List[Tuple[bool, float, float]],
     for i in range(len(combs)):
         for j in range(combs[i].pos_begin, combs[i].pos_end+1):
             yin[j] = i  # 表达出索引pos_begin至pos_end实际上是第i根独立K线
+
+
+
+
+
 
 
 
