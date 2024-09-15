@@ -37,6 +37,13 @@ class KSide(Enum):
     Init = 0    # 不确定
 
 
+class KExtreme(Enum):
+    """顶或是底"""
+    TOP = 1         # 顶
+    BOTTOM = -1     # 底
+    NORMAL = 0      # 不是顶也不是底
+
+
 class stCombineK:
     """K线合并类
     """
@@ -56,6 +63,31 @@ class stCombineK:
         return self.__str__()
 
 
+class stFxK:
+    """
+    K线分型，顶或是底
+    """
+    def __init__(self):
+        self.side: KExtreme = KExtreme.NORMAL   # 顶或是底， 0表示非顶或是非底
+        self.highest: float = 0.0
+        self.lowest: float = 0.0
+        self.independent_kline: stCombineK = None    # 顶或是底中独立K线
+
+    def __str__(self):
+        bottom_str = f"⬉⬈:{self.lowest:.2f}"
+        top_str = f"⬋⬊: {self.highest:.2f}"
+        normal_str = f"{self.lowest}⬅⮕{self.highest}"
+        if self.side == KExtreme.BOTTOM:
+            return bottom_str
+        elif self.side == KExtreme.TOP:
+            return top_str
+        else:
+            return normal_str
+
+    def __repr__(self):
+        return self.__str__()
+
+
 class stBiK:
     """
     K线笔类
@@ -70,17 +102,15 @@ class stBiK:
         self.side: KSide = KSide.Init
 
     def __str__(self):
-        up_str = f"{self.lowest}➚{self.highest}"
-        down_str = f"{self.highest}➘ {self.top}"
-        init_str = f"{self.lowest} || {self.highest}"
+        up_str = f"{self.lowest}⬈{self.highest}"
+        down_str = f"{self.highest}⬊ {self.top}"
+        init_str = f"{self.lowest} ⬅⮕ {self.highest}"
         if self.side == KSide.UP:
-            show = up_str
+            return up_str
         elif self.side == KSide.DOWN:
-            show = down_str
+            return down_str
         else:
-            show = init_str
-
-        return show
+            return init_str
 
     def __repr__(self):
         return self.__str__()

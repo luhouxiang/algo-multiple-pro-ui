@@ -193,6 +193,8 @@ def Cal_BI(lower: List[Tuple[bool, float, float]],
         for j in range(combs[i].pos_begin, combs[i].pos_end+1):
             yin[j] = i  # 表达出索引pos_begin至pos_end实际上是第i根独立K线
 
+    for i in range(len(lower)):
+        pass
 
 
 
