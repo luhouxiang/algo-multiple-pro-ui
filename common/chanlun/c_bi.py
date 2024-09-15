@@ -104,12 +104,13 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
     return pLast - pBegin + 1   # 得出独立K线的数量
 
 
-def Cal_LOWER(pData: List[KLine]) -> List[Tuple[bool, float, float]]:
+def Cal_LOWER(pData: List[KLine]) -> List[stFxK]:
     """
     计算底分型
     """
-    ret = [[False, 0.0, 0.0]] * len(pData)
     combs = cal_independent_klines(pData)
+    ret = [stFxK(index=i, side=KExtreme.NORMAL, low=0.0, high=0.0) for i in range(len(pData))]
+
     nCount = len(combs)
     if nCount <= 2:  # 小于等于2的，直接退出
         return ret
@@ -123,8 +124,9 @@ def Cal_LOWER(pData: List[KLine]) -> List[Tuple[bool, float, float]]:
                 less_than_0(combs[pCur].data.high - combs[pNext].data.high) and
                 less_than_0(combs[pCur].data.low - combs[pPrev].data.low) and
                 less_than_0(combs[pCur].data.low - combs[pNext].data.low)):
-            ret[combs[pCur].pos_extreme] = [True, combs[pCur].data.low, combs[pCur].data.high]
-
+            # ret[combs[pCur].pos_extreme] = [True, combs[pCur].data.low, combs[pCur].data.high]
+            ret[combs[pCur].pos_extreme] = stFxK(index=combs[pCur].pos_extreme, side=KExtreme.BOTTOM,
+                                                 low=combs[pCur].data.low, high=combs[pCur].data.high)
         pPrev += 1
         pCur += 1
         pNext += 1
@@ -132,15 +134,12 @@ def Cal_LOWER(pData: List[KLine]) -> List[Tuple[bool, float, float]]:
 
 
 
-def Cal_UPPER(pData: List[KLine]) -> List[Tuple[bool,float,float]]:
+def Cal_UPPER(pData: List[KLine]) -> List[stFxK]:
     """计算顶分型"""
-    m_pData = copy.deepcopy(pData)
-    combs: List[stCombineK] = []
-    for i in range(len(pData)):
-        data = stCombineK(m_pData[i], i, i, i, KSide.DOWN)
-        combs.append(data)
-    nCount = _Cal_MERGE(combs)
-    ret = [[False, 0.0, 0.0]] * len(combs)
+    combs = cal_independent_klines(pData)   # combs是实际的独立K线的集合
+    ret = [stFxK(index=i, side=KExtreme.NORMAL, low=0.0, high=0.0) for i in range(len(pData))]
+    nCount = len(combs)
+
     if nCount <= 2:
         return ret
 
@@ -153,8 +152,8 @@ def Cal_UPPER(pData: List[KLine]) -> List[Tuple[bool,float,float]]:
                 greater_than_0(combs[pCur].data.high - combs[pNext].data.high) and
                 greater_than_0(combs[pCur].data.low - combs[pPrev].data.low) and
                 greater_than_0(combs[pCur].data.low - combs[pNext].data.low)):
-            ret[combs[pCur].pos_extreme] = [True, combs[pCur].data.low, combs[pCur].data.high]
-
+            ret[combs[pCur].pos_extreme] = stFxK(index=combs[pCur].pos_extreme, side=KExtreme.TOP,
+                                                 low=combs[pCur].data.low, high=combs[pCur].data.high)
         pPrev += 1
         pCur += 1
         pNext += 1
@@ -181,7 +180,23 @@ def Cal_BI(lower: List[stFxK],
         """计算独立K线数"""
         return yin[e] - yin[b] + 1
 
-    ret = [stFxK(index=i, side=KExtreme.NORMAL, low=0.0, high=0.0) for i in len(lower)]
+    def get_node(base: int):
+        def is_valid(i: int):
+            bmgt = count_independent_kline(base, i)
+            return not (bmgt < 5)
+        def next_(base: int):
+            for i in range(base, len(ret)):
+                if ret[i].side == KExtreme.TOP or ret[i].side == KExtreme.BOTTOM:
+                    return i
+            return -1
+
+        side = ret[base].side
+        if side == KExtreme.TOP:
+            pass
+
+        return 0
+
+    ret = [stFxK(index=i, side=KExtreme.NORMAL, low=0.0, high=0.0) for i in range(len(lower))]
     for i in range(len(lower)):
         if lower[i].side == KExtreme.BOTTOM:
             ret[i] = stFxK(i, KExtreme.BOTTOM, lower[i].lowest, lower[i].highest)
@@ -193,8 +208,12 @@ def Cal_BI(lower: List[stFxK],
         for j in range(combs[i].pos_begin, combs[i].pos_end+1):
             yin[j] = i  # 表达出索引pos_begin至pos_end实际上是第i根独立K线
 
-    for i in range(len(lower)):
-        pass
+    for i in range(len(ret)):
+        right = get_node(i)
+
+
+
+
 
 
 

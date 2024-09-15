@@ -5,7 +5,7 @@ Created on
 @file: call_back.py
 @desc: 由配置文件回调过程
 """
-from common.model.kline import KLine
+from common.model.kline import KLine, KExtreme
 from common.algo.formula import MA
 from datetime import datetime
 from common.algo.weibi import get_weibi_list
@@ -66,12 +66,12 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
     logging.info(f"分型,顶底数量: {len(lower)}")
     for i in range(len(lower)):
         dt = datetime.fromtimestamp(klines[i].time)
-        if lower[i][0]:
+        if lower[i].side == KExtreme.BOTTOM:
             fenxin[dt] = [dt, -1]
             logging.info(f"底的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
     for i in range(len(upper)):
         dt = datetime.fromtimestamp(klines[i].time)
-        if upper[i][0]:
+        if upper[i].side == KExtreme.TOP:
             fenxin[dt] = [dt, 1]
             logging.info(f"顶的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
 
