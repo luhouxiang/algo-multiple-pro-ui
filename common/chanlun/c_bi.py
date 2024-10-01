@@ -160,6 +160,171 @@ def Cal_UPPER(pData: List[KLine]) -> List[stFxK]:
     return ret
 
 
+def get_node(base: int, temp: List[stFxK], independent_dic: Dict[int, int]) -> int:
+    def count_independent_kline(b: int, e: int) -> int:
+        """计算独立K线数"""
+        return independent_dic[e] - independent_dic[b] + 1
+
+    def is_valid(i: int):
+        bmgt = count_independent_kline(base, i)
+        return not (bmgt < 5)
+
+    def next_(base: int):
+        for i in range(base, len(temp)):
+            if temp[i].side == KExtreme.TOP or temp[i].side == KExtreme.BOTTOM:
+                return i
+        return -1
+
+    up = temp[base].side == KExtreme.BOTTOM
+    down = temp[base].side == KExtreme.TOP
+    next = base
+    while True:
+        next = next_(next + 1)
+        if next == -1:
+            return -1
+        if temp[base].side == temp[next].side:  # 方向相同
+            continue
+        if not is_valid(next):  # 无效
+            continue
+        if up and temp[next].lowest < temp[base].lowest:
+            continue
+        if down and temp[next].highest > temp[base].highest:
+            continue
+        return next
+    # next = next_(base + 1)
+    # while next > 0 and temp[next] == temp[base]:    # 相同的顶或是底
+    #     if next > 0:
+    #         next = next_(next + 1)
+    #     else:
+    #         break
+    #
+    # while next > 0:
+    #     mgt = count_independent_kline(base, next)
+    #     if mgt < 5:
+    #         next = next_(next + 1)  # 取下一个顶或底
+    #         c1 = next
+    #         while next > 0 and temp[next].side == temp[base]:
+    #             next = next_(next + 1)  # 寻找下一个顶或底
+    #             if next < 0:
+    #                 break
+    #             if up:  # 向上的笔
+    #                 pass
+    #             else:
+    #                 pass
+    #         ####
+    #         if next > 0 and c1 > 0:
+    #             if is_valid(next) and not is_valid(c1):
+    #                 pass
+    #             elif is_valid(next) and is_valid(c1):
+    #                 next = c1
+    #         ###
+    #         if next < 0:
+    #             break
+    #     else:   # 满足笔的K线数量的要求
+    #         bs = next
+    #         bs_next = next
+    #         while True:
+    #             bs_next = next_(bs_next + 1)
+    #             if bs_next < 0:
+    #                 return -next
+    #             if temp[bs_next] == temp[next]:
+    #                 if up:
+    #                     pass
+    # return 0
+
+
+def sort_fractal(lower: List[stFxK], upper: List[stFxK]):
+    """将顶分型和底分型合并成分型列表，并按索引升序排序"""
+    merged_list = lower + upper
+    merged_list = [i for i in merged_list if i.side != KExtreme.NORMAL]
+    merged_list.sort(key=lambda x: x.index)
+    return merged_list
+
+def select_stronger_fractal(f1: stFxK, f2: stFxK):
+    """
+    选择更强的分型：
+    - 对于顶分型，选择较高的 high 值
+    - 对于底分型，选择较低的 low 值
+    """
+    if f1.side == KExtreme.TOP:
+        return f1 if f1.highest > f2.highest else f2
+    elif f1.side == KExtreme.BOTTOM:
+        return f1 if f1.lowest < f2.lowest else f2
+    else:
+        return f1  # 如果类型不明，保留第一个
+
+
+def count_independent_kline(independents: Dict[int, int], b: int, e: int) -> int:
+    """计算独立K线数"""
+    return independents[e] - independents[b] + 1
+
+
+def is_valid_fx(independents: Dict[int, int], b: int, e: int):
+    bmgt = count_independent_kline(independents, b, e)
+    return bmgt >= 5
+
+
+def process_fractal(fractals: List[stFxK], combs: List[stCombineK]) -> List[stFxK]:
+    """
+    处理分型列表，消除不符合条件的分型，返回处理后的分型列表
+    """
+    if not fractals:
+        return []
+    independents: Dict[int, int] = {}
+    for i in range(len(combs)):
+        for j in range(combs[i].pos_begin, combs[i].pos_end+1):
+            independents[j] = i  # 表达出索引pos_begin至pos_end实际上是第i根独立K线
+
+    processed = [fractals[0]]  # 初始化处理后的分型列表
+    for next_fractal in fractals[1:]:
+        last_fractal = processed[-1]
+        if next_fractal.side == last_fractal.side:
+            # 处理相同类型的相邻分型
+            stronger_fractal = select_stronger_fractal(last_fractal, next_fractal)
+            processed[-1] = stronger_fractal
+        else:
+            # 处理不同类型的相邻分型
+            if is_valid_fx(independents, last_fractal.index, next_fractal.index):
+                processed.append(next_fractal)
+            else:
+                continue    # 跳过不符合条件的分型
+    return processed
+
+
+
+def generate_bi(fractals: List[stFxK]) -> List[stBiK]:
+    bi_list = []
+    for i in  range(len(fractals)-1):
+        f1 = fractals[i]
+        f2 = fractals[i+1]
+        if f1.side == f2.side:
+            continue
+        bi = stBiK()
+        bi.side = KSide.UP if f1.side == KExtreme.BOTTOM else KSide.DOWN
+        bi.top = f1 if f1.side == KExtreme.TOP else f2
+        bi.bottom = f2 if f2.side == KExtreme.BOTTOM else f1
+        bi.lowest = bi.bottom.lowest
+        bi.highest = bi.top.highest
+        bi.pos_begin = bi.bottom.index if bi.side == KSide.UP else bi.top.index
+        bi.pos_end = bi.top.index if bi.side == KSide.UP else bi.bottom.index
+        bi_list.append(bi)
+    return bi_list
+
+
+
+
+def calculate_bi(lower: List[stFxK], upper: List[stFxK], combs: List[stCombineK]) -> List[stBiK]:
+    """计算笔"""
+    merged_fractals = sort_fractal(lower, upper)
+    processed_fractals = process_fractal(merged_fractals, combs)
+    # print(processed_fractals)
+    bis = generate_bi(processed_fractals)
+    return bis
+    # print(bis)
+
+    # 生成笔
+
+
 def Cal_BI(lower: List[stFxK],
            upper: List[stFxK],
            combs: List[stCombineK]) -> List[stBiK]:
@@ -175,54 +340,41 @@ def Cal_BI(lower: List[stFxK],
     前底不高于后底，而在连续的顶后，必须会出现新的底，把这连续的顶中最先一个，和这新出现的底连在一起，就是新的一笔，而中间的那些顶，
     都 X 掉；在连续的底后，必须会出现新的顶，把这连续的底中最先一个，和这新出现的顶连在一起，就是新的一笔，而中间的那些底，都 X 掉。
     显然，经过上面的三个步骤，所有的笔都可以唯一地划分出来。
+    get_node:逻辑
     """
-    def count_independent_kline(b: int, e: int) -> int:
-        """计算独立K线数"""
-        return yin[e] - yin[b] + 1
 
-    def get_node(base: int):
-        def is_valid(i: int):
-            bmgt = count_independent_kline(base, i)
-            return not (bmgt < 5)
-        def next_(base: int):
-            for i in range(base, len(ret)):
-                if ret[i].side == KExtreme.TOP or ret[i].side == KExtreme.BOTTOM:
-                    return i
-            return -1
 
-        side = ret[base].side
-        if side == KExtreme.TOP:
-            pass
-
-        return 0
-
-    ret = [stFxK(index=i, side=KExtreme.NORMAL, low=0.0, high=0.0) for i in range(len(lower))]
+    temp = [stFxK(index=i, side=KExtreme.NORMAL, low=0.0, high=0.0) for i in range(len(lower))]
     for i in range(len(lower)):
         if lower[i].side == KExtreme.BOTTOM:
-            ret[i] = stFxK(i, KExtreme.BOTTOM, lower[i].lowest, lower[i].highest)
+            temp[i] = stFxK(i, KExtreme.BOTTOM, lower[i].lowest, lower[i].highest)
     for i in range(len(upper)):
         if upper[i].side == KExtreme.TOP:
-            ret[i] = stFxK(i, KExtreme.TOP, upper[i].lowest, upper[i].highest)
+            temp[i] = stFxK(i, KExtreme.TOP, upper[i].lowest, upper[i].highest)
     yin: Dict[int, int] = {}
     for i in range(len(combs)):
         for j in range(combs[i].pos_begin, combs[i].pos_end+1):
             yin[j] = i  # 表达出索引pos_begin至pos_end实际上是第i根独立K线
 
-    for i in range(len(ret)):
-        right = get_node(i)
+    bi_arr: List[(int, int)] = []
+    i = 0
+    while i < len(temp):
+        logging.info(f"[{i}]")
+        right = -1
+        if temp[i].side != KExtreme.NORMAL:
+            right = get_node(i, temp, yin)
+            if len(bi_arr) == 0:
+                bi_arr.append((i, temp[i].side))
+            if right > 0:
+                bi_arr.append((right, temp[right].side))
+                i = right
+                continue
+            else:
+                break
+        i += 1
 
-
-
-
-
-
-
-
-
-
-
-    # 组合成顶底分型的逻辑
-
+    for item in bi_arr:
+        logging.info(f"bi: {item[0]}, {item[1]}")
 
 
 def cal_independent_klines(pTmpData: List[KLine]) -> List[stCombineK]:

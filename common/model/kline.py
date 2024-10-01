@@ -95,8 +95,8 @@ class stBiK:
     K线笔类
     """
     def __init__(self):
-        self.pos_begin: int = 0 # 开始
-        self.pos_end: int = 0   # 结束
+        self.pos_begin: int = 0     # 开始
+        self.pos_end: int = 0       # 结束
         self.top: stCombineK = None     # 顶
         self.bottom: stCombineK = None  # 底
         self.highest: float = 0.0   # 最高
@@ -104,9 +104,9 @@ class stBiK:
         self.side: KSide = KSide.Init
 
     def __str__(self):
-        up_str = f"{self.lowest}⬈{self.highest}"
-        down_str = f"{self.highest}⬊ {self.top}"
-        init_str = f"{self.lowest} ⬅⮕ {self.highest}"
+        up_str = f"[{self.pos_begin}]{self.lowest}⬈[{self.pos_end}]{self.highest}"
+        down_str = f"[{self.pos_begin}]{self.highest}⬊ [{self.pos_end}]{self.lowest}"
+        init_str = f"[{self.pos_begin}]{self.lowest} ⬅⮕ [{self.pos_end}]{self.highest}"
         if self.side == KSide.UP:
             return up_str
         elif self.side == KSide.DOWN:
