@@ -47,17 +47,20 @@ class KExtreme(Enum):
 class stCombineK:
     """K线合并类
     """
-    def __init__(self, data, begin, end, base, isup):
-        self.data: KLine = data     # K线数据
+    def __init__(self, high, low, begin, end, base, isup):
+        self.range_high: float = high
+        self.range_low: float = low
         self.pos_begin: int = begin      # 起始
         self.pos_end: int = end          # 结束
         self.pos_extreme: int = base     # 最高或者最低位置,极值点位置
         self.isUp: KSide = KSide(isup)            # 是否向上
+        # self.data: KLine = data
         # print(self.isUp)
 
     def __str__(self):
         up = "up" if self.isUp == KSide.UP else "down"
-        return "[{}]:begin:{},end:{},base:{}".format(up, self.pos_begin, self.pos_end, self.pos_extreme)
+        return "[{}]:begin:[{}]{},end:[{}]{},base:{}".format(
+            up, self.pos_begin, self.range_low, self.pos_end, self.range_high, self.pos_extreme)
 
     def __repr__(self):
         return self.__str__()
@@ -66,13 +69,17 @@ class stCombineK:
 class stFxK:
     """
     K线分型，顶或是底
+    分型是由顶或底，左，右三个独立K线构成
     """
     def __init__(self, index: int, side: KExtreme, low: float, high: float):
         self.index: int = index
         self.side: KExtreme = side   # 顶或是底， 0表示非顶或是非底
         self.lowest: float = low
         self.highest: float = high
-        self.independent_kline: stCombineK = None    # 顶或是底中独立K线
+        self.extremal: stCombineK = None    # 顶或是底中独立K线
+        self.left: stCombineK = None
+        self.right: stCombineK = None
+        self.invalid: bool = True   # 标记该分型是否完整。针对实时数据，有时为了快，直接用不完整的分型进行计算
 
 
     def __str__(self):

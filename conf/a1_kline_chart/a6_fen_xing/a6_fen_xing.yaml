@@ -4,7 +4,8 @@ plots:
     max_height: 0
     chart_item:
     -
-      file_name: data/20240901_28#SRL9.txt
+      # file_name: data/20240901_28#SRL9.txt
+      file_name: data/20240901_28#SRL9_simple.txt
       type: Candle
     -
       file_name: ""

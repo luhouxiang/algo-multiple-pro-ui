@@ -45,61 +45,60 @@ def _Cal_MERGE(combs: List[stCombineK]) -> int:
     def ContainsK(low, high, index, pos_end):
         """用于处理包含K线的情况，更新K线的数据和位置"""
         nonlocal pPrev
-        combs[pLast].data.low = low
-        combs[pLast].data.high = high
+        combs[pLast].range_low = low
+        combs[pLast].range_high = high
         combs[pLast].pos_end = pos_end
         combs[pLast].pos_extreme = index
-
         pPrev = pLast
         return
 
     # 初始合并逻辑
-    if greater_than_0(combs[pCur].data.high - combs[pPrev].data.high) and \
-        greater_than_0(combs[pCur].data.low - combs[pPrev].data.low):
+    if greater_than_0(combs[pCur].range_high - combs[pPrev].range_high) and \
+        greater_than_0(combs[pCur].range_low - combs[pPrev].range_low):
         # 高点升，低点也升, 向上
         IndependentK(KSide.UP)
-    elif less_than_0(combs[pCur].data.high - combs[pPrev].data.high) and \
-        less_than_0(combs[pCur].data.low - combs[pPrev].data.low):
+    elif less_than_0(combs[pCur].range_high - combs[pPrev].range_high) and \
+        less_than_0(combs[pCur].range_low - combs[pPrev].range_low):
         # 高点降，低点也降，向下
         IndependentK(KSide.DOWN)
     else:
-        if greater_than_0(combs[pCur].data.high - combs[pPrev].data.high) or \
-            less_than_0(combs[pCur].data.low - combs[pPrev].data.low):
+        if greater_than_0(combs[pCur].range_high - combs[pPrev].range_high) or \
+            less_than_0(combs[pCur].range_low - combs[pPrev].range_low):
             # 高点高于前 或是 低点低于前， 右包含，向上合并
-            ContainsK(combs[pPrev].data.low, combs[pCur].data.high, combs[pCur].pos_begin, combs[pCur].pos_begin)
+            ContainsK(combs[pPrev].range_low, combs[pCur].range_high, combs[pCur].pos_begin, combs[pCur].pos_begin)
         else:   # 左包函，即低点高于前，高点低于前，也向上合并
-            ContainsK(combs[pCur].data.low, combs[pPrev].data.high, combs[pPrev].pos_begin, combs[pCur].pos_begin)
+            ContainsK(combs[pCur].range_low, combs[pPrev].range_high, combs[pPrev].pos_begin, combs[pCur].pos_begin)
     pCur += 1   # 当前pCur向后走一步
 
     while pCur <= pEnd:
-        if greater_than_0(combs[pCur].data.high - combs[pPrev].data.high) and \
-                greater_than_0(combs[pCur].data.low - combs[pPrev].data.low):
+        if greater_than_0(combs[pCur].range_high - combs[pPrev].range_high) and \
+                greater_than_0(combs[pCur].range_low - combs[pPrev].range_low):
             IndependentK(KSide.UP)  # 独立K 向上
-        elif less_than_0(combs[pCur].data.high - combs[pPrev].data.high) and \
-                less_than_0(combs[pCur].data.low - combs[pPrev].data.low):
+        elif less_than_0(combs[pCur].range_high - combs[pPrev].range_high) and \
+                less_than_0(combs[pCur].range_low - combs[pPrev].range_low):
             IndependentK(KSide.DOWN)    # 独立K 向下
         else:
             # 包含
-            if greater_than_0(combs[pCur].data.high - combs[pPrev].data.high) or \
-                    less_than_0(combs[pCur].data.low - combs[pPrev].data.low):
+            if greater_than_0(combs[pCur].range_high - combs[pPrev].range_high) or \
+                    less_than_0(combs[pCur].range_low - combs[pPrev].range_low):
                     # 右包含
                 if combs[pLast].isUp == KSide.UP:    # 向上，一样高取左极值，不一样高肯定是右高，取右值
-                    pos_index = combs[pPrev].pos_extreme if equ_than_0(combs[pCur].data.high - combs[pPrev].data.high) \
+                    pos_index = combs[pPrev].pos_extreme if equ_than_0(combs[pCur].range_high - combs[pPrev].range_high) \
                         else combs[pCur].pos_begin
-                    ContainsK(combs[pPrev].data.low, combs[pCur].data.high, pos_index, combs[pCur].pos_begin)
+                    ContainsK(combs[pPrev].range_low, combs[pCur].range_high, pos_index, combs[pCur].pos_begin)
                 else:         # 向下，一样低取左极值，不一样低肯定是右低，取右值
-                    pos_index = combs[pPrev].pos_extreme if equ_than_0(combs[pCur].data.low - combs[pPrev].data.low) \
+                    pos_index = combs[pPrev].pos_extreme if equ_than_0(combs[pCur].range_low - combs[pPrev].range_low) \
                         else combs[pCur].pos_begin
-                    ContainsK(combs[pCur].data.low, combs[pPrev].data.high, pos_index, combs[pCur].pos_begin)
+                    ContainsK(combs[pCur].range_low, combs[pPrev].range_high, pos_index, combs[pCur].pos_begin)
             else:   # 左包含
                 if combs[pLast].isUp == KSide.UP:  # 向上，一样高取左极值，否则高肯定是右高，取右值
                     pos_index = combs[pPrev].pos_begin if combs[pPrev].pos_begin == combs[pPrev].pos_end \
                         else combs[pPrev].pos_extreme
-                    ContainsK(combs[pCur].data.low, combs[pPrev].data.high, pos_index, combs[pCur].pos_begin)
+                    ContainsK(combs[pCur].range_low, combs[pPrev].range_high, pos_index, combs[pCur].pos_begin)
                 else:       # 向下，一样低取左极值，否则低肯定是右低，取右值
                     pos_index = combs[pPrev].pos_begin if combs[pPrev].pos_begin == combs[pPrev].pos_end \
                         else combs[pPrev].pos_extreme
-                    ContainsK(combs[pPrev].data.low, combs[pCur].data.high, pos_index, combs[pCur].pos_begin)
+                    ContainsK(combs[pPrev].range_low, combs[pCur].range_high, pos_index, combs[pCur].pos_begin)
         pCur += 1
     return pLast - pBegin + 1   # 得出独立K线的数量
 
@@ -120,13 +119,13 @@ def Cal_LOWER(pData: List[KLine]) -> List[stFxK]:
     pEnd = pPrev + nCount - 1
 
     while pNext <= pEnd:
-        if (less_than_0(combs[pCur].data.high - combs[pPrev].data.high) and
-                less_than_0(combs[pCur].data.high - combs[pNext].data.high) and
-                less_than_0(combs[pCur].data.low - combs[pPrev].data.low) and
-                less_than_0(combs[pCur].data.low - combs[pNext].data.low)):
+        if (less_than_0(combs[pCur].range_high - combs[pPrev].range_high) and
+                less_than_0(combs[pCur].range_high - combs[pNext].range_high) and
+                less_than_0(combs[pCur].range_low - combs[pPrev].range_low) and
+                less_than_0(combs[pCur].range_low - combs[pNext].range_low)):
             # ret[combs[pCur].pos_extreme] = [True, combs[pCur].data.low, combs[pCur].data.high]
             ret[combs[pCur].pos_extreme] = stFxK(index=combs[pCur].pos_extreme, side=KExtreme.BOTTOM,
-                                                 low=combs[pCur].data.low, high=combs[pCur].data.high)
+                                                 low=combs[pCur].range_low, high=combs[pCur].range_high)
         pPrev += 1
         pCur += 1
         pNext += 1
@@ -148,89 +147,20 @@ def Cal_UPPER(pData: List[KLine]) -> List[stFxK]:
     pNext = pCur + 1
     pEnd = pPrev + nCount - 1
     while pNext <= pEnd:
-        if (greater_than_0(combs[pCur].data.high - combs[pPrev].data.high) and
-                greater_than_0(combs[pCur].data.high - combs[pNext].data.high) and
-                greater_than_0(combs[pCur].data.low - combs[pPrev].data.low) and
-                greater_than_0(combs[pCur].data.low - combs[pNext].data.low)):
+        if (greater_than_0(combs[pCur].range_high - combs[pPrev].range_high) and
+                greater_than_0(combs[pCur].range_high - combs[pNext].range_high) and
+                greater_than_0(combs[pCur].range_low - combs[pPrev].range_low) and
+                greater_than_0(combs[pCur].range_low - combs[pNext].range_low)):
             ret[combs[pCur].pos_extreme] = stFxK(index=combs[pCur].pos_extreme, side=KExtreme.TOP,
-                                                 low=combs[pCur].data.low, high=combs[pCur].data.high)
+                                                 low=combs[pCur].range_low, high=combs[pCur].range_high)
+            ret[combs[pCur].pos_extreme].extremal = combs[pCur]
+            ret[combs[pCur].pos_extreme].left = combs[pPrev]
+            ret[combs[pCur].pos_extreme].right = combs[pNext]
+
         pPrev += 1
         pCur += 1
         pNext += 1
     return ret
-
-
-def get_node(base: int, temp: List[stFxK], independent_dic: Dict[int, int]) -> int:
-    def count_independent_kline(b: int, e: int) -> int:
-        """计算独立K线数"""
-        return independent_dic[e] - independent_dic[b] + 1
-
-    def is_valid(i: int):
-        bmgt = count_independent_kline(base, i)
-        return not (bmgt < 5)
-
-    def next_(base: int):
-        for i in range(base, len(temp)):
-            if temp[i].side == KExtreme.TOP or temp[i].side == KExtreme.BOTTOM:
-                return i
-        return -1
-
-    up = temp[base].side == KExtreme.BOTTOM
-    down = temp[base].side == KExtreme.TOP
-    next = base
-    while True:
-        next = next_(next + 1)
-        if next == -1:
-            return -1
-        if temp[base].side == temp[next].side:  # 方向相同
-            continue
-        if not is_valid(next):  # 无效
-            continue
-        if up and temp[next].lowest < temp[base].lowest:
-            continue
-        if down and temp[next].highest > temp[base].highest:
-            continue
-        return next
-    # next = next_(base + 1)
-    # while next > 0 and temp[next] == temp[base]:    # 相同的顶或是底
-    #     if next > 0:
-    #         next = next_(next + 1)
-    #     else:
-    #         break
-    #
-    # while next > 0:
-    #     mgt = count_independent_kline(base, next)
-    #     if mgt < 5:
-    #         next = next_(next + 1)  # 取下一个顶或底
-    #         c1 = next
-    #         while next > 0 and temp[next].side == temp[base]:
-    #             next = next_(next + 1)  # 寻找下一个顶或底
-    #             if next < 0:
-    #                 break
-    #             if up:  # 向上的笔
-    #                 pass
-    #             else:
-    #                 pass
-    #         ####
-    #         if next > 0 and c1 > 0:
-    #             if is_valid(next) and not is_valid(c1):
-    #                 pass
-    #             elif is_valid(next) and is_valid(c1):
-    #                 next = c1
-    #         ###
-    #         if next < 0:
-    #             break
-    #     else:   # 满足笔的K线数量的要求
-    #         bs = next
-    #         bs_next = next
-    #         while True:
-    #             bs_next = next_(bs_next + 1)
-    #             if bs_next < 0:
-    #                 return -next
-    #             if temp[bs_next] == temp[next]:
-    #                 if up:
-    #                     pass
-    # return 0
 
 
 def sort_fractal(lower: List[stFxK], upper: List[stFxK]):
@@ -239,6 +169,7 @@ def sort_fractal(lower: List[stFxK], upper: List[stFxK]):
     merged_list = [i for i in merged_list if i.side != KExtreme.NORMAL]
     merged_list.sort(key=lambda x: x.index)
     return merged_list
+
 
 def select_stronger_fractal(f1: stFxK, f2: stFxK):
     """
@@ -327,7 +258,7 @@ def cal_independent_klines(pTmpData: List[KLine]) -> List[stCombineK]:
     计算出独立K线,返回独立K线对象列表
     """
     pData = copy.deepcopy(pTmpData)
-    combs = [stCombineK(pData[i], i, i, i, KSide.DOWN) for i in range(len(pTmpData))]
+    combs = [stCombineK(pData[i].high, pData[i].low, i, i, i, KSide.DOWN) for i in range(len(pTmpData))]
     nCount = _Cal_MERGE(combs)
     if nCount <= 2:
         return combs[:nCount]

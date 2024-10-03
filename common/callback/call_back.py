@@ -118,9 +118,11 @@ def fn_calc_independent_klines(klines: list[KLine]):
     """计算独立K线数量"""
     combs = cal_independent_klines(klines)
     independents = {}
+    p = klines
     for i in range(len(combs)):
-        dt = datetime.fromtimestamp(combs[i].data.time)
-        independents[dt] = [dt, combs[i].data.low, combs[i].data.high, combs[i].pos_begin, combs[i].pos_end, combs[i].pos_extreme, combs[i].isUp.value]
+        dt = datetime.fromtimestamp(p[combs[i].pos_begin].time)
+        independents[dt] = [dt, combs[i].range_low, combs[i].range_high, combs[i].pos_begin, combs[i].pos_end,
+                            combs[i].pos_extreme, combs[i].isUp.value]
     return independents
 
 
