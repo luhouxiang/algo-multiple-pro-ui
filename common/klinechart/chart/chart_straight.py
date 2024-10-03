@@ -58,7 +58,7 @@ class ChartStraight(ChartBase):
         line_picture = QtGui.QPicture()
         painter = QtGui.QPainter(line_picture)
 
-        painter.setPen(self._pens[-1])
+        painter.setPen(self._pens[-2])
         painter.drawLine(
             QtCore.QPointF(x1, y1),
             QtCore.QPointF(x2, y2)

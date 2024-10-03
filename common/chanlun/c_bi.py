@@ -322,80 +322,23 @@ def calculate_bi(lower: List[stFxK], upper: List[stFxK], combs: List[stCombineK]
     return bis
     # print(bis)
 
-    # 生成笔
-
-
-def Cal_BI(lower: List[stFxK],
-           upper: List[stFxK],
-           combs: List[stCombineK]) -> List[stBiK]:
-    """
-    计算笔：给出底分型，顶分型有独立K线列表，返回笔列表
-    笔，必须是一顶一底，而且顶和底之间至少有一个 K 线不属于顶分型与底分型，还有一个最显然的，就是在同一笔中，
-    顶分型中最高那 K 线的区间至少要有一部分高于底分型中最低那 K 线的区间，如果这条都不满足，也就是顶都在底的范围内或顶比底还低，
-    这显然是不可接受的。算法：
-    一、确定所有符合标准的分型。
-    二、如果前后两分型是同一性质的，对于顶，前面的低于后面的，只保留后面的，前面那个可以X 掉；对于底，前面的高于后面的，
-    只保留后面的，前面那个可以 X 掉。不满足上面情况的，例如相等的，都可以先保留。
-    三、经过步骤二的处理后，余下的分型，如果相邻的是顶和底，那么这就可以划为一笔。如果相邻的性质一样，那么必然有前顶不低于后顶，
-    前底不高于后底，而在连续的顶后，必须会出现新的底，把这连续的顶中最先一个，和这新出现的底连在一起，就是新的一笔，而中间的那些顶，
-    都 X 掉；在连续的底后，必须会出现新的顶，把这连续的底中最先一个，和这新出现的顶连在一起，就是新的一笔，而中间的那些底，都 X 掉。
-    显然，经过上面的三个步骤，所有的笔都可以唯一地划分出来。
-    get_node:逻辑
-    """
-
-
-    temp = [stFxK(index=i, side=KExtreme.NORMAL, low=0.0, high=0.0) for i in range(len(lower))]
-    for i in range(len(lower)):
-        if lower[i].side == KExtreme.BOTTOM:
-            temp[i] = stFxK(i, KExtreme.BOTTOM, lower[i].lowest, lower[i].highest)
-    for i in range(len(upper)):
-        if upper[i].side == KExtreme.TOP:
-            temp[i] = stFxK(i, KExtreme.TOP, upper[i].lowest, upper[i].highest)
-    yin: Dict[int, int] = {}
-    for i in range(len(combs)):
-        for j in range(combs[i].pos_begin, combs[i].pos_end+1):
-            yin[j] = i  # 表达出索引pos_begin至pos_end实际上是第i根独立K线
-
-    bi_arr: List[(int, int)] = []
-    i = 0
-    while i < len(temp):
-        logging.info(f"[{i}]")
-        right = -1
-        if temp[i].side != KExtreme.NORMAL:
-            right = get_node(i, temp, yin)
-            if len(bi_arr) == 0:
-                bi_arr.append((i, temp[i].side))
-            if right > 0:
-                bi_arr.append((right, temp[right].side))
-                i = right
-                continue
-            else:
-                break
-        i += 1
-
-    for item in bi_arr:
-        logging.info(f"bi: {item[0]}, {item[1]}")
-
 
 def cal_independent_klines(pTmpData: List[KLine]) -> List[stCombineK]:
     """
     计算出独立K线,返回独立K线对象列表
     """
     pData = copy.deepcopy(pTmpData)
-    combs: List[stCombineK] = []
-    for i in range(len(pData)):
-        data = stCombineK(pData[i], i, i, i, KSide.DOWN)
-        combs.append(data)
+    combs = [stCombineK(pData[i], i, i, i, KSide.DOWN) for i in range(len(pTmpData))]
     nCount = _Cal_MERGE(combs)
     if nCount <= 2:
         return combs[:nCount]
     arr = combs[:nCount]
-    logging.info(f"begin...{'*' * 80}")
-    for i in arr:
-        logging.info(f"{i.pos_begin},{i.pos_end},{i.pos_extreme},"
-                     f"{i.isUp.value},{str(datetime.fromtimestamp(i.data.time))},"
-                     f"o={i.data.open},h={i.data.high},l={i.data.low},c={i.data.close}")
-    logging.info(f"end.{'*' * 80}")
+    # logging.info(f"begin...{'*' * 80}")
+    # for i in arr:
+    #     logging.info(f"{i.pos_begin},{i.pos_end},{i.pos_extreme},"
+    #                  f"{i.isUp.value},{str(datetime.fromtimestamp(i.data.time))},"
+    #                  f"o={i.data.open},h={i.data.high},l={i.data.low},c={i.data.close}")
+    # logging.info(f"end.{'*' * 80}")
     return arr
 
 
