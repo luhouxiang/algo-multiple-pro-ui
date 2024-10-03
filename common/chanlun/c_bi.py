@@ -317,7 +317,6 @@ def calculate_bi(lower: List[stFxK], upper: List[stFxK], combs: List[stCombineK]
     """计算笔"""
     merged_fractals = sort_fractal(lower, upper)
     processed_fractals = process_fractal(merged_fractals, combs)
-    # print(processed_fractals)
     bis = generate_bi(processed_fractals)
     return bis
     # print(bis)
