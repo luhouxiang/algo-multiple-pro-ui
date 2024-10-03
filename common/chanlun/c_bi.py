@@ -126,6 +126,10 @@ def Cal_LOWER(pData: List[KLine]) -> List[stFxK]:
             # ret[combs[pCur].pos_extreme] = [True, combs[pCur].data.low, combs[pCur].data.high]
             ret[combs[pCur].pos_extreme] = stFxK(index=combs[pCur].pos_extreme, side=KExtreme.BOTTOM,
                                                  low=combs[pCur].range_low, high=combs[pCur].range_high)
+            ret[combs[pCur].pos_extreme].left = combs[pPrev]
+            ret[combs[pCur].pos_extreme].right = combs[pNext]
+            ret[combs[pCur].pos_extreme].extremal = combs[pCur]
+            ret[combs[pCur].pos_extreme].highest = max(combs[pPrev].range_high, combs[pNext].range_high)
         pPrev += 1
         pCur += 1
         pNext += 1
@@ -153,9 +157,10 @@ def Cal_UPPER(pData: List[KLine]) -> List[stFxK]:
                 greater_than_0(combs[pCur].range_low - combs[pNext].range_low)):
             ret[combs[pCur].pos_extreme] = stFxK(index=combs[pCur].pos_extreme, side=KExtreme.TOP,
                                                  low=combs[pCur].range_low, high=combs[pCur].range_high)
-            ret[combs[pCur].pos_extreme].extremal = combs[pCur]
             ret[combs[pCur].pos_extreme].left = combs[pPrev]
             ret[combs[pCur].pos_extreme].right = combs[pNext]
+            ret[combs[pCur].pos_extreme].extremal = combs[pCur]
+            ret[combs[pCur].pos_extreme].lowest = min(combs[pPrev].range_low, combs[pNext].range_low)
 
         pPrev += 1
         pCur += 1
@@ -258,7 +263,7 @@ def cal_independent_klines(pTmpData: List[KLine]) -> List[stCombineK]:
     计算出独立K线,返回独立K线对象列表
     """
     pData = copy.deepcopy(pTmpData)
-    combs = [stCombineK(pData[i].high, pData[i].low, i, i, i, KSide.DOWN) for i in range(len(pTmpData))]
+    combs = [stCombineK(pData[i].low, pData[i].high, i, i, i, KSide.DOWN) for i in range(len(pTmpData))]
     nCount = _Cal_MERGE(combs)
     if nCount <= 2:
         return combs[:nCount]

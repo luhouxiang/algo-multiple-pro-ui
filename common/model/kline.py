@@ -47,9 +47,9 @@ class KExtreme(Enum):
 class stCombineK:
     """K线合并类
     """
-    def __init__(self, high, low, begin, end, base, isup):
-        self.range_high: float = high
+    def __init__(self, low, high, begin, end, base, isup):
         self.range_low: float = low
+        self.range_high: float = high
         self.pos_begin: int = begin      # 起始
         self.pos_end: int = end          # 结束
         self.pos_extreme: int = base     # 最高或者最低位置,极值点位置
