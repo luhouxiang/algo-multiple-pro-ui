@@ -72,7 +72,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, conf):
         super().__init__()
         datas: Dict[PlotIndex, PlotItemInfo] = load_data(conf)
-        widget = ChartWidget()
+        widget = ChartWidget(self)
         widget.manager.update_history_klines(datas[PlotIndex(0)][ItemIndex(0)].bars.values())
         obtain_data_from_algo(widget.manager.klines, datas)
         weibis = get_weibi_list(widget.manager.klines)

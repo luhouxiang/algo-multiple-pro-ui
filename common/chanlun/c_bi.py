@@ -231,8 +231,8 @@ def process_fractal(fractals: List[stFxK], combs: List[stCombineK]) -> List[stFx
 def generate_bi(fractals: List[stFxK]) -> List[stBiK]:
     bi_list = []
     for i in  range(len(fractals)-1):
-        f1 = fractals[i]
-        f2 = fractals[i+1]
+        f1: stFxK = fractals[i]
+        f2: stFxK = fractals[i+1]
         if f1.side == f2.side:
             continue
         bi = stBiK()

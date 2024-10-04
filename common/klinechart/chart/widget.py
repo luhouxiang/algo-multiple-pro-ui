@@ -35,8 +35,8 @@ class ChartWidget(pg.PlotWidget):
 
     def __init__(self, parent: QtWidgets.QWidget = None):
         """"""
-        super().__init__(parent)
-
+        super().__init__(None)
+        self.main_window = parent.window()
         self.manager: BarManager = BarManager()
 
         self._plots: List[pg.PlotItem] = []
@@ -88,6 +88,7 @@ class ChartWidget(pg.PlotWidget):
         if not self._cursor:
             self._cursor = ChartCursor(
                 self, self.manager, self._plots, self._item_plot_map)
+            self._cursor.main_window = self.main_window
 
     def add_plot(
         self,
@@ -372,7 +373,7 @@ class ChartCursor(QtCore.QObject):
     ):
         """"""
         super().__init__()
-
+        self.main_window = None
         self._widget: ChartWidget = widget
         self._manager: BarManager = manager
         self._plots: List[pg.GraphicsObject] = plots
@@ -474,6 +475,19 @@ class ChartCursor(QtCore.QObject):
         # First get current mouse point
         pos = evt
 
+        # Get the main window
+        # main_window = self.window()
+        main_window = self.main_window
+        # Get global mouse position
+        global_pos = QtGui.QCursor.pos()
+
+        # Map global position to main window coordinate system
+        main_pos = main_window.mapFromGlobal(global_pos)
+
+        # Determine the center x coordinate of the main window
+        center_x = main_window.width() / 2
+
+
         for index, view in self._views.items():
             rect = view.sceneBoundingRect()
             plot_name = index
@@ -487,7 +501,12 @@ class ChartCursor(QtCore.QObject):
         # Then update cursor component
         self._update_line()
         self._update_label()
-        self.update_lefttop_info()
+        # self.update_lefttop_info()
+        # Call the appropriate method based on mouse x position in main window
+        if main_pos.x() < center_x:
+            self.update_righttop_info()
+        else:
+            self.update_lefttop_info()
 
     def _update_line(self) -> None:
         """"""
@@ -536,8 +555,7 @@ class ChartCursor(QtCore.QObject):
             self._x_label.setPos(self._x, bottom_right.y())
             self._x_label.setAnchor((0, 0))
 
-    def update_lefttop_info(self) -> None:
-        """"""
+    def update_left_right_top_info(self, left: bool) -> None:
         buf = {}
 
         for item, plot in self._item_plot_map.items():
@@ -557,8 +575,32 @@ class ChartCursor(QtCore.QObject):
             info.show()
 
             view = self._views[plot_name]
-            top_left = view.mapSceneToView(view.sceneBoundingRect().topLeft())
-            info.setPos(top_left)
+            if left:
+                top_pos = view.mapSceneToView(view.sceneBoundingRect().topLeft())
+            else:
+                # 获取视图右上角的位置
+                top_right_scene_pos = view.sceneBoundingRect().topRight()
+                top_right_view_pos = view.mapSceneToView(top_right_scene_pos)
+
+                # 获取信息框的宽度
+                info_width = info.boundingRect().width()
+
+                # 考虑视图的缩放，计算实际需要减去的宽度
+                delta_pos = view.mapSceneToView(QtCore.QPointF(info_width, 0)) - view.mapSceneToView(
+                    QtCore.QPointF(0, 0))
+                info_width_in_view = delta_pos.x()
+
+                # 调整 x 坐标，确保信息框不会超出视图范围
+                adjusted_x = top_right_view_pos.x() - info_width_in_view
+                top_pos = QtCore.QPointF(adjusted_x, top_right_view_pos.y())
+            info.setPos(top_pos)
+
+    def update_lefttop_info(self) -> None:
+        """"""
+        self.update_left_right_top_info(True)
+
+    def update_righttop_info(self) -> None:
+        self.update_left_right_top_info(False)
 
     def move_right(self) -> None:
         """

@@ -112,8 +112,8 @@ class stBiK:
 
     def __str__(self):
         up_str = f"[{self.pos_begin}]{self.lowest}⬈[{self.pos_end}]{self.highest}"
-        down_str = f"[{self.pos_begin}]{self.highest}⬊ [{self.pos_end}]{self.lowest}"
-        init_str = f"[{self.pos_begin}]{self.lowest} ⬅⮕ [{self.pos_end}]{self.highest}"
+        down_str = f"[{self.pos_begin}]{self.highest}⬊[{self.pos_end}]{self.lowest}"
+        init_str = f"[{self.pos_begin}]{self.lowest}⬅⮕[{self.pos_end}]{self.highest}"
         if self.side == KSide.UP:
             return up_str
         elif self.side == KSide.DOWN:
@@ -123,3 +123,20 @@ class stBiK:
 
     def __repr__(self):
         return self.__str__()
+
+
+class Segment:
+    """段"""
+    def __init__(self):
+        self.start_index: int = 0
+        self.end_index: int = 0
+        self.up: bool = False
+        self.is_sure = False    # 是否被确认
+
+    def __str__(self):
+        up_seg = f"[{self.is_sure}][{self.start_index}]⬈[{self.end_index}]"
+        down_seg = f"[{self.is_sure}][{self.start_index}]⬊[{self.end_index}]"
+        if self.up:
+            return up_seg
+        else:
+            return down_seg
