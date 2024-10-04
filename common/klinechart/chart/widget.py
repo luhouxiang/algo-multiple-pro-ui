@@ -475,19 +475,6 @@ class ChartCursor(QtCore.QObject):
         # First get current mouse point
         pos = evt
 
-        # Get the main window
-        # main_window = self.window()
-        main_window = self.main_window
-        # Get global mouse position
-        global_pos = QtGui.QCursor.pos()
-
-        # Map global position to main window coordinate system
-        main_pos = main_window.mapFromGlobal(global_pos)
-
-        # Determine the center x coordinate of the main window
-        center_x = main_window.width() / 2
-
-
         for index, view in self._views.items():
             rect = view.sceneBoundingRect()
             plot_name = index
@@ -501,12 +488,24 @@ class ChartCursor(QtCore.QObject):
         # Then update cursor component
         self._update_line()
         self._update_label()
+        self.update_lefttop_info()
+
+    def update_lefttop_info(self):
         # self.update_lefttop_info()
         # Call the appropriate method based on mouse x position in main window
+        # Get the main window
+        # main_window = self.window()
+        main_window = self.main_window
+        # Get global mouse position
+        global_pos = QtGui.QCursor.pos()
+        # Map global position to main window coordinate system
+        main_pos = main_window.mapFromGlobal(global_pos)
+        # Determine the center x coordinate of the main window
+        center_x = main_window.width() / 2
         if main_pos.x() < center_x:
-            self.update_righttop_info()
+            self.update_left_right_top_info(False)
         else:
-            self.update_lefttop_info()
+            self.update_left_right_top_info(True)
 
     def _update_line(self) -> None:
         """"""
@@ -595,12 +594,12 @@ class ChartCursor(QtCore.QObject):
                 top_pos = QtCore.QPointF(adjusted_x, top_right_view_pos.y())
             info.setPos(top_pos)
 
-    def update_lefttop_info(self) -> None:
-        """"""
-        self.update_left_right_top_info(True)
+    # def update_lefttop_info(self) -> None:
+    #     """"""
+    #     self.update_left_right_top_info(True)
 
-    def update_righttop_info(self) -> None:
-        self.update_left_right_top_info(False)
+    # def update_righttop_info(self) -> None:
+    #     self.update_left_right_top_info(False)
 
     def move_right(self) -> None:
         """
