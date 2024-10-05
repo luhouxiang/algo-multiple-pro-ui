@@ -108,8 +108,8 @@ def init_independents(combs: List[stCombineK]):
 
 def fn_calc_bi(klines: list[KLine]) -> List[Any]:
     """回调计算过程"""
-    lower:List[stFxK] = Cal_LOWER(klines)
-    upper:List[stFxK] = Cal_UPPER(klines)
+    lower: List[stFxK] = Cal_LOWER(klines)
+    upper: List[stFxK] = Cal_UPPER(klines)
     combs = cal_independent_klines(klines)
     merges = init_merges(combs, klines)
     independents = init_independents(combs)
