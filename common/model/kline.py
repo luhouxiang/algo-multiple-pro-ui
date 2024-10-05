@@ -58,9 +58,14 @@ class stCombineK:
         # print(self.isUp)
 
     def __str__(self):
-        up = "up" if self.isUp == KSide.UP else "down"
+        if self.isUp == KSide.UP:
+            side = "up"
+        elif self.isUp == KSide.DOWN:
+            side = "down"
+        elif self.isUp == KSide.Init:
+            side = "init"
         return "[{}]:begin:[{}]{},end:[{}]{},base:{}".format(
-            up, self.pos_begin, self.range_low, self.pos_end, self.range_high, self.pos_extreme)
+            side, self.pos_begin, self.range_low, self.pos_end, self.range_high, self.pos_extreme)
 
     def __repr__(self):
         return self.__str__()

@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import Tuple, Dict
 
 
-def _Cal_MERGE(combs: List[stCombineK]) -> int:
+def _Cal_MERGE_COUNT(combs: List[stCombineK]) -> int:
     """
     合并K线逻辑,接受一个stCombineK类型的列表combs, 返回一个整数值表示独立K线的个数
     :param klines:
@@ -129,7 +129,7 @@ def Cal_LOWER(pData: List[KLine]) -> List[stFxK]:
             ret[combs[pCur].pos_extreme].left = combs[pPrev]
             ret[combs[pCur].pos_extreme].right = combs[pNext]
             ret[combs[pCur].pos_extreme].extremal = combs[pCur]
-            ret[combs[pCur].pos_extreme].highest = max(combs[pPrev].range_high, combs[pNext].range_high)
+            # ret[combs[pCur].pos_extreme].highest = max(combs[pPrev].range_high, combs[pNext].range_high)
         pPrev += 1
         pCur += 1
         pNext += 1
@@ -160,12 +160,22 @@ def Cal_UPPER(pData: List[KLine]) -> List[stFxK]:
             ret[combs[pCur].pos_extreme].left = combs[pPrev]
             ret[combs[pCur].pos_extreme].right = combs[pNext]
             ret[combs[pCur].pos_extreme].extremal = combs[pCur]
-            ret[combs[pCur].pos_extreme].lowest = min(combs[pPrev].range_low, combs[pNext].range_low)
+            # ret[combs[pCur].pos_extreme].lowest = min(combs[pPrev].range_low, combs[pNext].range_low)
 
         pPrev += 1
         pCur += 1
         pNext += 1
     return ret
+
+
+def Cal_Fx(lower: List[stFxK], upper: List[stFxK]):
+    """返回顶底分型的合集"""
+    temp = [i for i in lower]
+    for i in range(len(lower)):
+        if upper[i].side != KExtreme.NORMAL:
+            temp[i] = upper[i]
+    return temp
+
 
 
 def sort_fractal(lower: List[stFxK], upper: List[stFxK]):
@@ -199,6 +209,12 @@ def is_valid_fx(independents: Dict[int, int], b: int, e: int):
     bmgt = count_independent_kline(independents, b, e)
     return bmgt >= 5
 
+
+def get_independents(combs: List[stCombineK]):
+    independents: Dict[int, int] = {}
+    for i in range(len(combs)):
+        for j in range(combs[i].pos_begin, combs[i].pos_end+1):
+            independents[j] = i  # 表达出索引pos_begin至pos_end实际上是第i根独立K线
 
 def process_fractal(fractals: List[stFxK], combs: List[stCombineK]) -> List[stFxK]:
     """
@@ -249,7 +265,7 @@ def generate_bi(fractals: List[stFxK]) -> List[stBiK]:
 
 
 
-def calculate_bi(lower: List[stFxK], upper: List[stFxK], combs: List[stCombineK]) -> List[stBiK]:
+def calculate_bi2(lower: List[stFxK], upper: List[stFxK], combs: List[stCombineK]) -> List[stBiK]:
     """计算笔"""
     merged_fractals = sort_fractal(lower, upper)
     processed_fractals = process_fractal(merged_fractals, combs)
@@ -258,13 +274,151 @@ def calculate_bi(lower: List[stFxK], upper: List[stFxK], combs: List[stCombineK]
     # print(bis)
 
 
-def cal_independent_klines(pTmpData: List[KLine]) -> List[stCombineK]:
+def deal_same_top_bottom(next: int, temp: List[stFxK], base: int, up: bool, merge: List[KLine], c1: int) -> (int, int):
+    """处理相同顶底的情况"""
+    while next > 0 and temp[next].side == temp[base].side:
+        next = next_(next + 1, temp)
+        if next < 0:
+            break
+        if up:
+            if merge[next].low < merge[c1].low:
+                c1 = next
+        else:
+            if merge[next].high > merge[c1].high:
+                c1 = next
+    return next, c1
+
+
+def deal_not_last(next: int, c1: int, base: int, ind: Dict[int, int]) -> (int, int):
+    if next > 0 and c1 > 0:
+        if is_valid_fx(ind, next, base) and not is_valid_fx(ind, c1, base):
+            pass
+    elif is_valid_fx(ind, next, base) and is_valid_fx(ind, c1, base):
+        next = c1
+    return next
+
+
+def satisfy_the_number(next: int, temp: List[stFxK], up: bool, merge: List[KLine], ind: Dict[int, int]) -> (int, int):
+    bs = next
+    bs_next = next
+    while True:
+        bs_next = next_(bs_next+1, temp)
+        if bs_next < 0:
+            return -next, next    # 寻到末尾了，返回前一个，且以负数返回，表示已经到最后了
+        if temp[bs_next].side == temp[next].side:   # 同方向的，即同底分型或是同顶分型
+            if up:
+                if merge[bs_next].low < merge[next].low:
+                    next = bs_next
+                    bs = next
+                    bs_next = next
+                    continue
+            else:   # up 在同一级别
+                if merge[bs_next].high > merge[next].high:
+                    next = bs_next
+                    bs = next
+                    bs_next = next
+            continue
+        bmgt = count_independent_kline(ind, bs, bs_next)
+        if bmgt < 5:
+            continue
+        else:
+            if up:
+                if merge[bs_next].high < merge[next].high or (not merge[bs_next].low > merge[next].high):
+                    continue
+            else:
+                if merge[bs_next].low > merge[next].low or (not merge[bs_next].high < merge[next].low):
+                    continue
+            break
+    return 0, next
+
+
+def get_node(base: int, temp: List[stFxK], merge: List[KLine], ind: Dict[int, int]):
+    norm = 5
+    up = temp[base].side == KExtreme.TOP
+    next = go_util_difference_fx(base, temp)
+
+    while next > 0:
+        mgt = count_independent_kline(ind, base, next)  # 计算独立K线的数量
+        if mgt < norm:
+            next = next_(next+1, temp)
+            c1 = next
+            next, c1 = deal_same_top_bottom(next, temp, base, up, merge, c1)
+            next = deal_not_last(next, c1, base, ind)
+            if next < 0:
+                break
+        else:   # 满足笔的K线数量的要求
+            rel, next = satisfy_the_number(next, temp, up, merge, ind)
+            if rel == 0:
+                break
+            else:
+                return rel
+    return next
+
+
+def counter_merge(b, e, merge: List[stCombineK]):
+    """计算出独立K线的根数"""
+    count = 0
+    while b <= e:
+        if merge[b].range_high == merge[e].range_high and merge[b].range_low == merge[e].range_low:
+            pass
+        else:
+            count += 1
+        b += 1
+    return count
+
+
+def go_util_difference_fx(base, temp):
+    """往下走，相同的分型就一直走，一直走到遇到不同的分开为止"""
+    next = next_(base + 1, temp)
+    while next > 0 and temp[next].side == temp[base].side:  # 相同的顶或底，再往下走
+        if next > 0:
+            next = next_(base + 1, temp)
+        else:
+            break
+    return next
+
+
+def next_(base: int, temp: List[stFxK]):
+    for i in range(base, len(temp)):
+        if temp[i].side != KExtreme.NORMAL:
+            return i
+    return -1
+
+
+def calculate_bi(lower: List[stFxK], upper: List[stFxK], merge: List[KLine], ind: Dict[int, int]) -> List[stBiK]:
+    """计算笔"""
+    temp = Cal_Fx(lower, upper)
+    # for i in range(len(temp)):
+    #
+    # merged_fractals = sort_fractal(lower, upper)
+    # processed_fractals = process_fractal(merged_fractals, combs)
+    # bis = generate_bi(processed_fractals)
+    old_: List[stFxK] = []
+    i = 0
+    while i < len(temp):
+        if temp[i].side != KExtreme.NORMAL:
+            right = get_node(i, temp, merge, ind)
+            if right < 0:
+                if right < -1:
+                    old_.append(temp[-right])
+                break
+            if not old_:
+                old_.append(temp[i])
+            old_.append(temp[right])
+            i = right - 1
+        i += 1
+    for item in old_:
+        logging.info(f"[{item.index}]:{item.side}")
+    bis = generate_bi(old_)
+    return bis
+
+
+def cal_independent_klines(pData: List[KLine]) -> List[stCombineK]:
     """
     计算出独立K线,返回独立K线对象列表
     """
-    pData = copy.deepcopy(pTmpData)
-    combs = [stCombineK(pData[i].low, pData[i].high, i, i, i, KSide.DOWN) for i in range(len(pTmpData))]
-    nCount = _Cal_MERGE(combs)
+    combs = [stCombineK(pData[i].low, pData[i].high, i, i, i, KSide.DOWN) for i in range(len(pData))]
+    nCount = _Cal_MERGE_COUNT(combs)
     if nCount <= 2:
         return combs[:nCount]
     arr = combs[:nCount]
@@ -275,6 +429,24 @@ def cal_independent_klines(pTmpData: List[KLine]) -> List[stCombineK]:
     #                  f"o={i.data.open},h={i.data.high},l={i.data.low},c={i.data.close}")
     # logging.info(f"end.{'*' * 80}")
     return arr
+
+
+# def Cal_Merge(pData: List[KLine]) -> List[stCombineK]:
+#     """
+#     计算出独立K线,返回独立K线对象列表
+#     """
+#     combs = [stCombineK(pData[i].low, pData[i].high, i, i, i, KSide.DOWN) for i in range(len(pData))]
+#     nCount = _Cal_MERGE(combs)
+#     if nCount <= 2:
+#         return combs[:nCount]
+#     arr = combs[:nCount]
+#
+#     rel = [stCombineK(0, 0, i, i, i, KSide.Init) for i in range(len(pData))]
+#
+#     for i in arr:
+#         rel[i.pos_extreme] = i
+#     return rel
+
 
 
 def pre_(klines: List[KLine], base: int) -> int:

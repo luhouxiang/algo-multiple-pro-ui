@@ -5,7 +5,7 @@ Created on
 @file: call_back.py
 @desc: 由配置文件回调过程
 """
-from common.model.kline import KLine, KExtreme, KSide, stFxK
+from common.model.kline import KLine, KExtreme, KSide, stFxK, stCombineK
 from common.algo.formula import MA
 from datetime import datetime
 from common.algo.weibi import get_weibi_list
@@ -13,6 +13,7 @@ from typing import List, Any
 from common.model.obj import Direction
 from common.chanlun.c_bi import Cal_LOWER
 from common.chanlun.c_bi import Cal_UPPER, cal_independent_klines, calculate_bi
+from typing import Dict
 import logging
 import json
 
@@ -96,12 +97,24 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
     return fenxin
 
 
+def init_independents(combs: List[stCombineK]):
+    """初始化K线索引和独立K线索引的映射关系"""
+    independents: Dict[int, int] = {}
+    for i in range(len(combs)):
+        for j in range(combs[i].pos_begin, combs[i].pos_end+1):
+            independents[j] = i  # 表达出索引pos_begin至pos_end实际上是第i根独立K线
+    return independents
+
+
 def fn_calc_bi(klines: list[KLine]) -> List[Any]:
     """回调计算过程"""
     lower:List[stFxK] = Cal_LOWER(klines)
     upper:List[stFxK] = Cal_UPPER(klines)
     combs = cal_independent_klines(klines)
-    bi_list = calculate_bi(lower, upper, combs)
+    merges = init_merges(combs, klines)
+    independents = init_independents(combs)
+
+    bi_list = calculate_bi(lower, upper, merges, independents)
 
     items = []
     for w in bi_list:
@@ -112,6 +125,14 @@ def fn_calc_bi(klines: list[KLine]) -> List[Any]:
         else:
             items.append([s_dt, w.highest, e_dt, w.lowest, 0])
     return items
+
+
+def init_merges(combs, klines) -> List[KLine]:
+    merges = [k for k in klines]
+    for item in combs:
+        for i in range(item.pos_begin, item.pos_end + 1):
+            merges[i].low, merges[i].high = item.range_low, item.range_high
+    return merges
 
 
 def fn_calc_independent_klines(klines: list[KLine]):
