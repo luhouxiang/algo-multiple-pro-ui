@@ -5,14 +5,14 @@ Created on
 @file: call_back.py
 @desc: 由配置文件回调过程
 """
-from common.model.kline import KLine, KExtreme, KSide, stFxK, stCombineK
+from common.model.kline import KLine, KExtreme, KSide, stFxK, stCombineK, Segment
 from common.algo.formula import MA
 from datetime import datetime
 from common.algo.weibi import get_weibi_list
 from typing import List, Any
 from common.model.obj import Direction
 from common.chanlun.c_bi import Cal_LOWER
-from common.chanlun.c_bi import Cal_UPPER, cal_independent_klines, calculate_bi
+from common.chanlun.c_bi import Cal_UPPER, cal_independent_klines, calculate_bi, _NCHDUAN
 from typing import Dict
 import logging
 import json
@@ -107,7 +107,7 @@ def init_independents(combs: List[stCombineK]):
 
 
 def fn_calc_bi(klines: list[KLine]) -> List[Any]:
-    """回调计算过程"""
+    """回调计算过程笔"""
     lower: List[stFxK] = Cal_LOWER(klines)
     upper: List[stFxK] = Cal_UPPER(klines)
     combs = cal_independent_klines(klines)
@@ -121,9 +121,30 @@ def fn_calc_bi(klines: list[KLine]) -> List[Any]:
         s_dt = datetime.fromtimestamp(klines[w.pos_begin].time)
         e_dt = datetime.fromtimestamp(klines[w.pos_end].time)
         if w.side == KSide.UP:
-            items.append([s_dt, w.lowest, e_dt, w.highest, 0])
+            items.append([s_dt, w.lowest, e_dt, w.highest, 0, "red"])
         else:
-            items.append([s_dt, w.highest, e_dt, w.lowest, 0])
+            items.append([s_dt, w.highest, e_dt, w.lowest, 0, "red"])
+    return items
+
+
+def fn_calc_seg(klines: list[KLine]) -> List[Segment]:
+    """回调计算段"""
+    lower: List[stFxK] = Cal_LOWER(klines)
+    upper: List[stFxK] = Cal_UPPER(klines)
+    combs = cal_independent_klines(klines)
+    merges = init_merges(combs, klines)
+    independents = init_independents(combs)
+
+    bi_list = calculate_bi(lower, upper, merges, independents)
+    seg_list: List[Segment] = _NCHDUAN(bi_list, klines)
+    items = []
+    for w in seg_list:
+        s_dt = datetime.fromtimestamp(klines[w.start_index].time)
+        e_dt = datetime.fromtimestamp(klines[w.end_index].time)
+        if w.up:
+            items.append([s_dt, w.lowest, e_dt, w.highest, 0, "blue"])
+        else:
+            items.append([s_dt, w.highest, e_dt, w.lowest, 0, "blue"])
     return items
 
 

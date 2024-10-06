@@ -135,6 +135,8 @@ class Segment:
     def __init__(self):
         self.start_index: int = 0
         self.end_index: int = 0
+        self.highest: float = 0.0
+        self.lowest: float = 0.0
         self.up: bool = False
         self.is_sure = False    # 是否被确认
 

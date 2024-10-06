@@ -61,6 +61,15 @@ class ChartBase(pg.GraphicsObject):
         self._bars: Dict[datetime, DataItem] = {}
         self._discrete_list: List[DataItem] = []  # 离散数据，例如直线类，不是每个点上都有直线，也可能一个点上多个直线
         self._pens = [self._yellow_pen, self._up_pen, self._down_pen, self._magenta_pen, self._blue_pen]
+        colors_ = ["yellow", "red", "green", "magenta", "blue"]
+        self.color_to_pen = dict(zip(colors_, self._pens))
+
+    # 定义获取笔对象的方法
+    def get_pen_by_color(self, color):
+        try:
+            return self.color_to_pen[color]
+        except KeyError:
+            return self.color_to_pen["yellow"]
 
     def get_index(self, dt: datetime) -> TIndex:
         """

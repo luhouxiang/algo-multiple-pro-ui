@@ -7,7 +7,7 @@
 2 合并K线：2根有包含关系的K线，如果方向向下，则取其中高点中的低点作为新K线高点，取其中低点中的低点作为新K线低点，由此合并出一根新K线。
 如果方向向上，则取其中高点中的高点作为新K线高点，取其中低点中的高点作为新K线低点，由此合并出一根新K线。
 """
-from common.model.kline import KLine, stCombineK, KSide, stFxK, stBiK, KExtreme
+from common.model.kline import KLine, stCombineK, KSide, stFxK, stBiK, KExtreme, Segment
 from typing import List, Any
 from common.chanlun.float_compare import *
 import copy
@@ -344,8 +344,261 @@ def cal_independent_klines(pData: List[KLine]) -> List[stCombineK]:
     return combs
 
 
+def find_first_segment(cur_pos: int, vtDisivion: List[stBiK], pData: List[KLine],
+                       max_pos: int, min_pos: int, seg: Segment) -> bool:
+    """
+    线段一定被后一线段破坏、 且破坏前一线段
+    由于第一根线段没有可破坏的线段，所以第一根线段 实际上是 从 第二根线段开始算
+    """
+    idx = vtDisivion[cur_pos].pos_begin
+    if vtDisivion[cur_pos].side == KSide.UP:   # 向上
+        max_idx = vtDisivion[max_pos].pos_begin
+        if greater_than_0(pData[idx].high - pData[max_idx].high):
+            max_pos = cur_pos
+        if cur_pos - min_pos < 3:
+            return False
+        pre_idx = vtDisivion[cur_pos-2].pos_begin
+        if greater_than_0(pData[idx].high - pData[pre_idx].high):
+            idx = vtDisivion[cur_pos-1].pos_begin
+            pre_idx = vtDisivion[cur_pos-3].pos_begin
+            if greater_than_0(pData[idx].high - pData[pre_idx].high):
+                # 暂时成段
+                seg.start_index = min_pos
+                seg.end_index = cur_pos
+                seg.up = True
+                return True
+    else:
+        # 第一段找最低的点作为向上段的起始点
+        min_idx = vtDisivion[min_pos].pos_begin
+        if less_than_0(pData[idx].low - pData[min_idx].low):
+            min_pos = cur_pos
+        if cur_pos - max_pos < 3:
+            return False
+        pre_idx = vtDisivion[cur_pos-2].pos_begin
+        if less_than_0(pData[idx].low - pData[pre_idx].low):
+            idx = vtDisivion[cur_pos-1].pos_begin
+            pre_idx = vtDisivion[cur_pos-3].pos_begin
+            if less_than_0(pData[idx].high - pData[pre_idx].high):
+                seg.start_index = max_pos
+                seg.end_index = cur_pos
+                seg.up = False
+                return True
+
+    return False
 
 
+def is_overlap(cur_pos: int, vtDisivion: List[stBiK], pData: List[KLine]) -> bool:
+    if cur_pos < 3:
+        return False
+    # 判断连续三笔是否重叠
+    idx = vtDisivion[cur_pos].pos_begin
+    pre_idx = vtDisivion[cur_pos-3].pos_begin
+    if vtDisivion[cur_pos].side == KSide.UP:    # 向下笔
+        if less_than_0(pData[idx].high - pData[pre_idx].low):
+            return False
+    else:                                       # 向上笔
+        if greater_than_0(pData[idx].low - pData[pre_idx].high):
+            return False
+    return True
+
+
+def make_sure_low_segment(segment: Segment, cur_pos: int, vtDisivion: List[stBiK], pData: List[KLine]) -> int:
+    status = -1
+    while True:
+        cur_idx = vtDisivion[cur_pos].pos_begin
+        low_idx = vtDisivion[segment.end_index].pos_begin
+        if vtDisivion[cur_pos].side == KSide.DOWN:
+            # 更低
+            if less_than_0(pData[cur_idx].low - pData[low_idx].low):
+                segment.end_index = cur_pos
+            break
+        if cur_pos - segment.end_index < 3:
+            break
+        i = segment.end_index + 3
+        end_pos = segment.end_index + 1
+        for i in range(segment.end_index + 3, cur_pos + 1, 2):
+            if not greater_than_0(pData[vtDisivion[i].pos_begin].high - pData[vtDisivion[end_pos].pos_begin].high):
+                end_pos = i
+                continue
+            # 判断是否需要合并K线
+            fMaxPrice = pData[vtDisivion[segment.start_index + 2].pos_begin].high
+            fMinPrice = pData[vtDisivion[segment.start_index + 1].pos_begin].low
+            for k in range(segment.start_index + 3, segment.end_index, 2):
+                if less_than_0(fMinPrice - pData[vtDisivion[k].pos_begin].low):
+                    if less_than_0(fMaxPrice - pData[vtDisivion[k+1].pos_begin].high):
+                        fMinPrice = pData[vtDisivion[k].pos_begin].low
+                    fMaxPrice = pData[vtDisivion[k+1].pos_begin].high
+                else:
+                    fMinPrice = pData[vtDisivion[k].pos_begin].low
+                    fMaxPrice = pData[vtDisivion[k+1].pos_begin].high
+
+            if less_than_0(pData[vtDisivion[end_pos].pos_begin].high - fMinPrice):
+                # 存在缺口
+                status = 1
+            else:
+                status = 0
+            break
+        break   # 走到这一步，即退出
+    return status
+
+
+def make_sure_up_segment(segment: Segment, cur_pos: int, vtDisivion: List[stBiK], pData: List[KLine]) -> int:
+    status = -1
+    while True:
+        cur_idx = vtDisivion[cur_pos].pos_begin
+        end_idx = vtDisivion[segment.end_index].pos_begin
+        if vtDisivion[cur_pos].side == KSide.UP:
+            if greater_than_0(pData[cur_idx].high - pData[end_idx].high):
+                segment.end_index = cur_pos
+            break
+
+        if cur_pos - segment.end_index < 3:
+            break
+
+        end_pos = segment.end_index + 1
+        for i in range(segment.end_index + 3, cur_pos + 1, 2):
+            if not less_than_0(pData[vtDisivion[i].pos_begin].low - pData[vtDisivion[end_pos].pos_begin].low):
+                end_pos = i
+                continue
+            fMaxPrice = pData[vtDisivion[segment.start_index + 1].pos_begin].high
+            fMinPrice = pData[vtDisivion[segment.start_index + 2].pos_begin].low
+            for k in range(segment.start_index+3, segment.end_index, 2):
+                if greater_than_0(fMaxPrice - pData[vtDisivion[k].pos_begin].high):
+                    if greater_than_0(fMinPrice - pData[vtDisivion[k+1].pos_begin].low):
+                        fMaxPrice = pData[vtDisivion[k].pos_begin].high
+                    fMinPrice = pData[vtDisivion[k+1].pos_begin].low
+                else:
+                    fMaxPrice = pData[vtDisivion[k].pos_begin].high
+                    fMinPrice = pData[vtDisivion[k+1].pos_begin].low
+
+            if greater_than_0(pData[vtDisivion[end_pos].pos_begin].low - fMaxPrice):
+                status = 1
+            else:
+                status = 0
+            break
+        break
+    return status
+
+
+def make_sure_segment(segment: Segment, cur_pos: int, vtDisivion: List[stBiK], pData: List[KLine]):
+    if segment.up:
+        return make_sure_up_segment(segment, cur_pos, vtDisivion, pData)
+    return make_sure_low_segment(segment, cur_pos, vtDisivion, pData)
+
+
+def update_segment(cur_pos: int, seg: Segment, tmp_seg: Segment, vtDisivion: List[stBiK], ret: List[Segment], pData: List[KLine]):
+    if tmp_seg.start_index == tmp_seg.end_index:
+        status = make_sure_segment(seg, cur_pos, vtDisivion, pData)
+        if status == -1:
+            return
+        if status == 0:
+            # 不存在缺口
+            seg.is_sure = True
+            ret.append(copy.deepcopy(seg))
+
+            seg.start_index = seg.end_index
+            seg.end_index = cur_pos
+            seg.is_sure = False
+            seg.up = not seg.up
+        elif status == 1:
+            # 存在缺口
+            tmp_seg.start_index = seg.end_index
+            tmp_seg.end_index = cur_pos
+            tmp_seg.is_sure = False
+            tmp_seg.up = not seg.up
+    else:
+        status = make_sure_segment(tmp_seg, cur_pos, vtDisivion, pData)
+        if status == -1:
+            if vtDisivion[cur_pos].side == KSide.UP and not tmp_seg.up:
+                if not tmp_seg.up:  # 这儿是否有逻辑漏洞？？？
+                    if greater_than_0(pData[vtDisivion[cur_pos].pos_begin].high -
+                                      pData[vtDisivion[tmp_seg.start_index].pos_begin].high):
+                        seg.end_index = cur_pos
+                        tmp_seg.start_index = tmp_seg.end_index = 0
+            else:
+                if tmp_seg.up:
+                    if less_than_0(pData[vtDisivion[cur_pos].pos_begin].low -
+                                   pData[vtDisivion[tmp_seg.start_index].pos_begin].low):
+                        seg.end_index = cur_pos
+                        tmp_seg.start_index = tmp_seg.end_index = 0
+            return
+
+        seg.is_sure = True
+        ret.append(copy.deepcopy(seg))
+
+        seg.is_sure = False
+        if status == 0:
+            # 不存在缺口
+            tmp_seg.is_sure = True
+            ret.append(copy.deepcopy(tmp_seg))
+
+            seg.start_index = tmp_seg.end_index
+            seg.end_index = cur_pos
+            seg.is_sure = False
+            seg.up = not tmp_seg.up
+
+            tmp_seg.start_index = tmp_seg.end_index = 0
+        elif status == 1:
+            # 存在缺口
+            seg.start_index = tmp_seg.start_index
+            seg.end_index = tmp_seg.end_index
+            seg.up = tmp_seg.up
+
+            tmp_seg.start_index = seg.end_index
+            tmp_seg.end_index = cur_pos
+            tmp_seg.up = not seg.up
+
+
+def _NCHDUAN(vtDisivion: List[stBiK], pData: List[KLine]) -> List[Segment]:
+    for item in vtDisivion:
+        item.side = KSide.UP if item.side == KSide.DOWN else KSide.DOWN
+    ret: List[Segment] = []
+    min_pos = -1
+    max_pos = -1
+    seg, tmp_seg = Segment(), Segment()
+    status = 0
+    nSize = len(vtDisivion)
+    for i in range(3, nSize):
+        if status == 0:
+            if not is_overlap(i, vtDisivion, pData):
+                min_pos = max_pos = -1
+                continue
+            if min_pos == -1:
+                min_pos = max_pos = i - 3
+                for k in range(i-2, i):
+                    if greater_than_0(pData[vtDisivion[k].pos_begin].high - pData[vtDisivion[max_pos].pos_begin].high):
+                        max_pos = k
+                    if less_than_0(pData[vtDisivion[k].pos_begin].low - pData[vtDisivion[min_pos].pos_begin].low):
+                        min_pos = k
+            if not find_first_segment(i, vtDisivion, pData, max_pos, min_pos, seg):
+                continue
+
+            status = 1
+            min_pos = max_pos = 1
+            continue
+        update_segment(i, seg, tmp_seg, vtDisivion, ret, pData)
+
+    if seg.start_index != seg.end_index:
+        ret.append(copy.deepcopy(seg))
+    if tmp_seg.start_index != tmp_seg.end_index:
+        ret.append(copy.deepcopy(tmp_seg))
+
+    for iter in ret:
+        if iter.up:
+            iter.lowest = vtDisivion[iter.start_index].lowest
+            iter.highest = vtDisivion[iter.end_index].highest
+        else:
+            iter.lowest = vtDisivion[iter.end_index].lowest
+            iter.highest = vtDisivion[iter.start_index].highest
+
+        iter.start_index = vtDisivion[iter.start_index].pos_begin
+        iter.end_index = vtDisivion[iter.end_index].pos_begin
+
+
+    if len(ret) > 0:
+        ret.pop(0)
+
+    return ret
 
 
 

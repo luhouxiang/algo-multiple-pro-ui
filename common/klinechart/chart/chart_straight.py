@@ -48,24 +48,29 @@ class ChartStraight(ChartBase):
             elif item[4] == 1:  # 射线
                 x2 = max_ix
                 y2 = p * (x2 - x1) + y1
-            bar_picture = self._draw_bar_picture(x1, y1, x2, y2)
-            bar_picture.play(painter)
+            if len(item) > 5:
+                painter.setPen(self.get_pen_by_color(item[5]))
+            else:
+                painter.setPen(self._pens[-2])
+
+            self._draw_bar_picture(painter, x1, y1, x2, y2)
+            self._item_picuture.play(painter)
         painter.end()
 
-    def _draw_bar_picture(self, x1: int, y1: float, x2: int, y2: float) -> QtGui.QPicture:
+    def _draw_bar_picture(self, painter, x1: int, y1: float, x2: int, y2: float):
         """"""
         # Create objects
-        line_picture = QtGui.QPicture()
-        painter = QtGui.QPainter(line_picture)
+        # line_picture = QtGui.QPicture()
+        # painter = QtGui.QPainter(line_picture)
 
-        painter.setPen(self._pens[-2])
+        # painter.setPen(self._pens[-2])
         painter.drawLine(
             QtCore.QPointF(x1, y1),
             QtCore.QPointF(x2, y2)
         )
         # Finish
-        painter.end()
-        return line_picture
+        # painter.end()
+        # return line_picture
 
     def get_info_text(self, ix: int) -> str:
         """
