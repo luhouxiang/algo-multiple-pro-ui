@@ -5,14 +5,14 @@ Created on
 @file: call_back.py
 @desc: 由配置文件回调过程
 """
-from common.model.kline import KLine, KExtreme, KSide, stFxK, stCombineK, Segment
+from common.model.kline import KLine, KExtreme, KSide, stFxK, stCombineK, Segment, Pivot
 from common.algo.formula import MA
 from datetime import datetime
 from common.algo.weibi import get_weibi_list
 from typing import List, Any
 from common.model.obj import Direction
 from common.chanlun.c_bi import Cal_LOWER
-from common.chanlun.c_bi import Cal_UPPER, cal_independent_klines, calculate_bi, _NCHDUAN
+from common.chanlun.c_bi import Cal_UPPER, cal_independent_klines, calculate_bi, _NCHDUAN, compute_standard_pivots
 from typing import Dict
 import logging
 import json
@@ -26,7 +26,7 @@ def fn_calc_ma20_60(klines: list[KLine]):
         dt = datetime.fromtimestamp(k.time)
         MA20.input(k.close)
         MA60.input(k.close)
-        bars[dt] = [dt, MA20.ma, MA60.ma]
+        bars[dt] = [dt, MA20.ma]
     return bars
 
 
@@ -142,9 +142,35 @@ def fn_calc_seg(klines: list[KLine]) -> List[Segment]:
         s_dt = datetime.fromtimestamp(klines[w.start_index].time)
         e_dt = datetime.fromtimestamp(klines[w.end_index].time)
         if w.up:
-            items.append([s_dt, w.lowest, e_dt, w.highest, 0, "blue"])
+            items.append([s_dt, w.lowest, e_dt, w.highest, 0, "yellow"])
         else:
-            items.append([s_dt, w.highest, e_dt, w.lowest, 0, "blue"])
+            items.append([s_dt, w.highest, e_dt, w.lowest, 0, "yellow"])
+    return items
+
+
+def fn_calc_pivot(klines: list[KLine]) -> List[Pivot]:
+    """回调计算中枢"""
+    lower: List[stFxK] = Cal_LOWER(klines)
+    upper: List[stFxK] = Cal_UPPER(klines)
+    combs = cal_independent_klines(klines)
+    merges = init_merges(combs, klines)
+    independents = init_independents(combs)
+
+    bi_list = calculate_bi(lower, upper, merges, independents)
+    seg_list: List[Segment] = _NCHDUAN(bi_list, klines)
+    pivots: List[Pivot] = compute_standard_pivots(seg_list, bi_list)
+    items = []
+    for w in pivots:
+        s_dt = datetime.fromtimestamp(klines[w.bg_index].time)
+        e_dt = datetime.fromtimestamp(klines[w.ed_index].time)
+        if w.up:
+            color = "red"
+        else:
+            color = "green"
+        items.append([s_dt, w.lowly_value, e_dt, w.lowly_value, 0, color])
+        items.append([s_dt, w.highly_value, e_dt, w.highly_value, 0, color])
+        items.append([s_dt, w.lowly_value, s_dt, w.highly_value, 0, color])
+        items.append([e_dt, w.lowly_value, e_dt, w.highly_value, 0, color])
     return items
 
 

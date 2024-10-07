@@ -30,7 +30,9 @@ df['时间'] = df['时间'].apply(lambda x: x.zfill(4) if x != '' else x)
 df['dt'] = pd.to_datetime(df['日期'] + ' ' + df['时间'], format='%Y/%m/%d %H%M')
 df = df[['dt'] + [col for col in df.columns if col not in ['日期', '时间', 'dt', '持仓量', '结算价']]]
 df = df.rename(columns={'开盘': 'open', '最高': 'high', '最低': 'low', '收盘': 'close', '成交量': 'volume'})
-df.to_csv(f"./data/{date.today().strftime("%Y%m%d")}_{file_name}", index=False)
+file_name = f"./data/{date.today().strftime("%Y%m%d")}_{file_name}"
+print(f"will save_file: {file_name}")
+df.to_csv(file_name, index=False)
 print(df)
 
 

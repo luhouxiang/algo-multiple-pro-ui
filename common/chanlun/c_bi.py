@@ -7,7 +7,7 @@
 2 合并K线：2根有包含关系的K线，如果方向向下，则取其中高点中的低点作为新K线高点，取其中低点中的低点作为新K线低点，由此合并出一根新K线。
 如果方向向上，则取其中高点中的高点作为新K线高点，取其中低点中的高点作为新K线低点，由此合并出一根新K线。
 """
-from common.model.kline import KLine, stCombineK, KSide, stFxK, stBiK, KExtreme, Segment
+from common.model.kline import KLine, stCombineK, KSide, stFxK, stBiK, KExtreme, Segment, Pivot
 from typing import List, Any
 from common.chanlun.float_compare import *
 import copy
@@ -550,6 +550,8 @@ def update_segment(cur_pos: int, seg: Segment, tmp_seg: Segment, vtDisivion: Lis
 
 
 def _NCHDUAN(vtDisivion: List[stBiK], pData: List[KLine]) -> List[Segment]:
+    # vtDisivion = copy.deepcopy(tDisivion)
+    """计算线段"""
     for item in vtDisivion:
         item.side = KSide.UP if item.side == KSide.DOWN else KSide.DOWN
     ret: List[Segment] = []
@@ -601,7 +603,117 @@ def _NCHDUAN(vtDisivion: List[stBiK], pData: List[KLine]) -> List[Segment]:
     return ret
 
 
+def get_anchors(seg: Segment, bi_list: List[stBiK]) -> List[int]:
+    """获取线段内的笔索引列表"""
+    anchors = []
+    for i, bi in enumerate(bi_list):
+        if bi.pos_begin >= seg.start_index and bi.pos_end <= seg.end_index:
+            anchors.append(i)
+    return anchors
 
+
+def compute_pivots_in_segment(seg: Segment, anchors: List[int], bi_list: List[stBiK]) -> List[Pivot]:
+    """在单个线段内计算标准中枢"""
+    pivots = []
+    if len(anchors) > 4:
+        base = 1
+        while base < len(anchors) - 2:
+            pivot = Pivot()
+            if not seg.up:
+                # 向下线段
+                # 检查当前锚点是否为底分型（即笔的方向为向下）
+                if bi_list[anchors[base]].side == KSide.DOWN:
+                    # 检查重叠条件：第二个顶 > 第一个底
+                    if base + 3 < len(anchors) and bi_list[anchors[base + 3]].highest > bi_list[anchors[base]].lowest:
+                        # 起点：第一个底
+                        pivot.bg = anchors[base]
+                        # 最高点：第一个顶与第二个顶的较低者
+                        first_top = bi_list[anchors[base + 1]]
+                        second_top = bi_list[anchors[base + 3]]
+                        pivot.highly = anchors[base + 1] if first_top.highest < second_top.highest else anchors[base + 3]
+                        # 最低点：第一个底与第二个底的较高者
+                        first_bottom = bi_list[anchors[base]]
+                        second_bottom = bi_list[anchors[base + 2]]
+                        pivot.lowly = anchors[base] if first_bottom.lowest > second_bottom.lowest else anchors[base + 2]
+                        # 终点：寻找第N个顶，当其低于第一个底时，终点为第(N-1)个顶
+                        pivot.ed = anchors[base + 3]
+                        bFindEnd = False
+                        i = base + 5
+                        while i < len(anchors):
+                            if bi_list[anchors[i]].highest < bi_list[anchors[base]].lowest:
+                                pivot.ed = anchors[i - 2]
+                                base = i - 1
+                                bFindEnd = True
+                                break
+                            i += 2
+                        if not bFindEnd:
+                            pivot.ed = anchors[-2]
+                        pivot.up = False
+                        pivots.append(pivot)
+                        if not bFindEnd:
+                            break  # 未找到终点，退出
+                    else:
+                        base += 2  # 找下一个底分型
+                else:
+                    break  # 非底分型，无法继续
+            else:
+                # 向上线段
+                # 检查当前锚点是否为顶分型（即笔的方向为向上）
+                if bi_list[anchors[base]].side == KSide.UP:
+                    # 检查重叠条件：第二个底 < 第一个顶
+                    if base + 3 < len(anchors) and bi_list[anchors[base + 3]].lowest < bi_list[anchors[base]].highest:
+                        # 起点：第一个顶
+                        pivot.bg = anchors[base]
+                        # 最高点：第一个顶与第二个顶的较低者
+                        first_top = bi_list[anchors[base]]
+                        second_top = bi_list[anchors[base + 2]]
+                        pivot.highly = anchors[base] if first_top.highest < second_top.highest else anchors[base + 2]
+                        # 最低点：第一个底与第二个底的较高者
+                        first_bottom = bi_list[anchors[base + 1]]
+                        second_bottom = bi_list[anchors[base + 3]]
+                        pivot.lowly = anchors[base + 1] if first_bottom.lowest > second_bottom.lowest else anchors[base + 3]
+                        # 终点：寻找第N个底，当其高于第一个顶时，终点为第(N-1)个底
+                        pivot.ed = anchors[base + 3]
+                        bFindEnd = False
+                        i = base + 5
+                        while i < len(anchors):
+                            if bi_list[anchors[i]].lowest > bi_list[anchors[base]].highest:
+                                pivot.ed = anchors[i - 2]
+                                base = i - 1
+                                bFindEnd = True
+                                break
+                            i += 2
+                        if not bFindEnd:
+                            pivot.ed = anchors[-2]
+                        pivot.up = True
+                        pivots.append(pivot)
+                        if not bFindEnd:
+                            break  # 未找到终点，退出
+                    else:
+                        base += 2  # 找下一个顶分型
+                else:
+                    break  # 非顶分型，无法继续
+            base += 1
+    return pivots
+
+
+def compute_standard_pivots(seg_list: List[Segment], bi_list: List[stBiK]) -> List[Pivot]:
+    """计算所有线段中的标准中枢"""
+    # bi_list = copy.deepcopy(i_list)
+    # for item in bi_list:
+    #     item.side = KSide.UP if item.side == KSide.DOWN else KSide.DOWN
+    pivots = []
+    for seg in seg_list:
+        anchors = get_anchors(seg, bi_list)
+        pivots_in_seg = compute_pivots_in_segment(seg, anchors, bi_list)
+        pivots.extend(pivots_in_seg)
+    for p in pivots:
+        p.bg_index = bi_list[p.bg].pos_begin
+        p.ed_index = bi_list[p.ed].pos_end
+        p.lowly_value = bi_list[p.lowly].lowest
+        p.highly_value = bi_list[p.highly].highest
+
+    return pivots
 
 
 
