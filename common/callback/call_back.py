@@ -161,8 +161,8 @@ def fn_calc_pivot(klines: list[KLine]) -> List[Pivot]:
     pivots: List[Pivot] = compute_standard_pivots(seg_list, bi_list)
     items = []
     for w in pivots:
-        s_dt = datetime.fromtimestamp(klines[w.bg_index].time)
-        e_dt = datetime.fromtimestamp(klines[w.ed_index].time)
+        s_dt = datetime.fromtimestamp(klines[w.bg_pos_index].time)
+        e_dt = datetime.fromtimestamp(klines[w.ed_pos_index].time)
         if w.up:
             color = "red"
         else:

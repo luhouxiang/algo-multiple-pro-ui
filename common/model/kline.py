@@ -152,19 +152,15 @@ class Segment:
 class Pivot:
     """中枢"""
     def __init__(self):
-        self.highly: int = 0   # 最高点的索引
-        self.lowly: int = 0    # 最低点的索引
-        self.bg: int = 0       # 起点索引
-        self.ed: int = 0       # 终点索引
         self.up: bool = False  # 中枢方向，True为向上，False为向下
-        self.bg_index: int = 0
-        self.ed_index: int = 0
+        self.bg_pos_index: int = 0
+        self.ed_pos_index: int = 0
         self.highly_value: float = 0.0
         self.lowly_value: float = 0.0
 
     def __str__(self):
         direction = "⬈" if self.up else "⬊"
-        return (f"[{self.bg_index}]{direction}[{self.ed_index}]"
+        return (f"pos_index:[{self.bg_pos_index}]{direction}[{self.ed_pos_index}]"
                 f",l:[{self.lowly_value}],h:[{self.highly_value}]")
 
     def __repr__(self):
