@@ -157,8 +157,8 @@ def fn_calc_pivot(klines: list[KLine]) -> List[Pivot]:
     independents = init_independents(combs)
 
     bi_list = calculate_bi(lower, upper, merges, independents)
-    seg_list: List[Segment] = _NCHDUAN(bi_list, klines)
-    pivots: List[Pivot] = compute_standard_pivots(seg_list, bi_list)
+    # seg_list: List[Segment] = _NCHDUAN(bi_list, klines)
+    pivots: List[Pivot] = compute_standard_pivots(bi_list)
     items = []
     for w in pivots:
         s_dt = datetime.fromtimestamp(klines[w.bg_pos_index].time)
