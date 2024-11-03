@@ -698,17 +698,6 @@ def get_anchors(seg: Segment, bi_list: List[stBiK]) -> List[int]:
 #     return pivots
 def process_down_segment(base: int, anchors: List[int], bi_list: List[stBiK]) -> Tuple[Optional[Pivot], int, bool]:
     """处理向下线段内的中枢计算。
-
-    Args:
-        base (int): 当前基准锚点索引。
-        anchors (List[int]): 锚点列表。
-        bi_list (List[stBiK]): 笔列表。
-
-    Returns:
-        Tuple[Optional[Pivot], int, bool]: 返回元组 (pivot, updated_base, should_continue)。
-            - pivot: 如果找到中枢，则为 Pivot 对象；否则为 None。
-            - updated_base: 更新后的基准锚点索引。
-            - should_continue: 是否继续主循环。
     """
     pivot = Pivot()
     # 检查当前锚点是否为底分型（即笔的方向为向下）
@@ -791,6 +780,98 @@ def process_up_segment(base: int, anchors: List[int], bi_list: List[stBiK]) -> T
         return None, base, False
 
 
+def intervals_overlap(a, b, c, d):
+    """要判断两个区间 [a, b] 和 [c, d] 是否有重叠"""
+    return max(a, c) <= min(b, d)
+
+
+def process_down_up(base: int, bi_list: List[stBiK]) -> Tuple[Optional[Pivot], int, bool]:
+    """处理向下线段内的中枢计算。
+    """
+    pivot = Pivot()
+    # 检查当前锚点是否为底分型（即笔的方向为向下）
+    if bi_list[base].side == KSide.DOWN:
+        # 检查重叠条件：第二个顶 > 第一个底
+        if base + 3 < len(bi_list) and bi_list[base + 3].highest > bi_list[base].lowest:
+            # 起点：第一个底
+            pivot.highly_value = min(bi_list[base + 1].highest, bi_list[base + 3].highest)
+            pivot.lowly_value = max(bi_list[base].lowest, bi_list[base + 2].lowest)
+            # 初始化终点为第二个顶
+            pivot.bg_pos_index = bi_list[base].pos_begin
+            pivot.ed_pos_index = bi_list[base + 3].pos_end
+            bFindEnd = False
+            i = base + 5
+            # 寻找中枢的终点
+            while i < len(bi_list):
+                # 当第N个顶的最高点低于第一个底的最低点时，终点为第(N-1)个顶
+                # if bi_list[i].highest < bi_list[base].lowest:
+                #     pivot.ed_pos_index = bi_list[i - 2].pos_end
+                #     base = i - 1  # 更新基准点为上一个底分型
+                #     bFindEnd = True
+                #     break
+                if not intervals_overlap(pivot.lowly_value, pivot.highly_value, bi_list[i].lowest, bi_list[i].highest):
+                    break
+                pivot.ed_pos_index = bi_list[i].pos_end
+                i += 2  # 只需检查顶分型
+            # if not bFindEnd:
+            #     pivot.ed_pos_index = bi_list[-2].pos_end  # 未找到终点，终点为倒数第二个锚点
+            base = i
+            pivot.up = False
+            return pivot, base, True
+        else:
+            base += 2  # 移动到下一个底分型
+            return None, base, True
+    else:
+        # 检查重叠条件：第二个底 < 第一个顶
+        if base + 3 < len(bi_list) and bi_list[base + 3].lowest < bi_list[base].highest:
+            pivot.highly_value = min(bi_list[base].highest, bi_list[base + 2].highest)
+            pivot.lowly_value = max(bi_list[base + 1].lowest, bi_list[base + 3].lowest)
+
+            pivot.bg_pos_index = bi_list[base].pos_begin
+            pivot.ed_pos_index = bi_list[base + 3].pos_end
+            bFindEnd = False
+            i = base + 5
+            # 寻找中枢的终点
+            while i < len(bi_list):
+                # 当第N个底的最低点高于第一个顶的最高点时，终点为第(N-1)个底
+                # if bi_list[i].lowest > bi_list[base].highest:
+                #     pivot.ed_pos_index = bi_list[i - 2].pos_end
+                #     base = i - 1  # 更新基准点为上一个顶分型
+                #     bFindEnd = True
+                #     break
+                if not intervals_overlap(pivot.lowly_value, pivot.highly_value, bi_list[i].lowest, bi_list[i].highest):
+                    break
+                pivot.ed_pos_index = bi_list[i].pos_end
+                i += 2  # 只需检查底分型
+            # if not bFindEnd:
+            #     pivot.ed_pos_index = bi_list[-2].pos_end  # 未找到终点，终点为倒数第二个锚点
+            base = i
+            pivot.up = True
+            return pivot, base, True
+        else:
+            base += 2  # 移动到下一个顶分型
+            return None, base, True
+
+
+def compute_bi_pivots(bi_list: List[stBiK]) -> List[Pivot]:
+    """计算笔中枢"""
+    pivots = []
+    if len(bi_list) <= 4:
+        return pivots
+    base = 1   # 从第二个锚点开始
+    while base < len(bi_list) - 2:
+        pivot, base, should_continue = process_down_up(base, bi_list)
+        if pivot:
+            pivots.append(pivot)
+        if not should_continue:
+            break
+        base += 1
+    return pivots
+
+
+
+
+
 def compute_pivots_in_segment(seg: Segment, anchors: List[int], bi_list: List[stBiK]) -> List[Pivot]:
     """计算单个线段内的标准中枢。"""
     pivots = []
@@ -820,10 +901,11 @@ def compute_pivots_in_segment(seg: Segment, anchors: List[int], bi_list: List[st
 def compute_standard_pivots(seg_list: List[Segment], bi_list: List[stBiK]) -> List[Pivot]:
     """计算所有线段中的标准中枢"""
     pivots = []
-    for seg in seg_list:
-        anchors = get_anchors(seg, bi_list)
-        pivots_in_seg = compute_pivots_in_segment(seg, anchors, bi_list)
-        pivots.extend(pivots_in_seg)
+    # for seg in seg_list:
+    #     anchors = get_anchors(seg, bi_list)
+        # pivots_in_seg = compute_pivots_in_segment(seg, anchors, bi_list)
+    pivots_in_seg = compute_bi_pivots(bi_list)
+    pivots.extend(pivots_in_seg)
 
     return pivots
 
