@@ -295,6 +295,7 @@ class ChartWidget(pg.PlotWidget):
             self._on_key_up()
         elif event.key() == QtCore.Qt.Key_Down:
             self._on_key_down()
+        super().keyPressEvent(event)
 
     def wheelEvent(self, event: QtGui.QWheelEvent) -> None:
         """
