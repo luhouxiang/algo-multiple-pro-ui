@@ -330,8 +330,8 @@ def calculate_bi(lower: List[stFxK], upper: List[stFxK], merge: List[KLine], ind
             old_.append(temp[right])
             i = right - 1
         i += 1
-    for item in old_:
-        logging.info(f"[{item.index}]:{item.side}")
+    # for item in old_:
+    #     logging.info(f"[{item.index}]:{item.side}")
     bis = generate_bi(old_)
     return bis
 

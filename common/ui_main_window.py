@@ -35,7 +35,7 @@ def obtain_data_from_algo(klines: list[KLine], data: Dict[PlotIndex, PlotItemInf
                     info.bars = globals()[info.func_name](klines)
 
 
-def load_data(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]:
+def load_data(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]:  # 从文件中读取数据
     """
     返回以layout_index, index为key的各item的kl_data_list
     """
@@ -49,7 +49,7 @@ def load_data(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]:
             item_info.params = item["params"] if "params" in item else []
             item_info.func_name = item["func_name"] if "func_name" in item else ""
             item_info.data_type = item["data_type"] if "data_type" in item else []
-            data_list = file_txt.read_file(item["file_name"])
+            data_list = file_txt.tail(f'{conf["conf"]["base_path"]}/{item["file_name"]}')
             bar_dict: BarDict = calc_bars(data_list, item_info.data_type)
             item_info.bars = bar_dict
             plot_info[ItemIndex(item_index)] = item_info

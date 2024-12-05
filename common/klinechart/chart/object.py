@@ -12,8 +12,8 @@ TIndex = int
 
 class DataItem(list):
     """ 表格数据
-    如果输入数据类似如下：‘2022-01-14 22:16:00,4625.0,4626.0,4621.0,4622.0’
-    我们将其转换为：['2022-01-14 22:16:00', 4625.0, 4626.0, 4621.0, 4622.0]
+    如果输入数据类似如下：‘2022/01/14 2216,4625.0,4626.0,4621.0,4622.0’
+    我们将其转换为：[2022-01-14 22:16:00, 4625.0, 4626.0, 4621.0, 4622.0]
     如果输入数据如下：‘2022-01-14 22:16:00,4622.0’
     我们将其转换为：['2022-01-14 22:16:00', 4622.0]
     """
@@ -27,8 +27,8 @@ class DataItem(list):
             return
         arr = txt.split(",")
         if not data_type:
-            arr = [float(arr[i]) if i > 0 else datetime.strptime(arr[0], "%Y-%m-%d %H:%M:%S") for i in
-                   range(0, len(arr))]
+            arr = [float(arr[i]) if i > 1 else datetime.strptime(f"{arr[0]} {arr[1]}", "%Y/%m/%d %H%M") for i in
+                   range(1, len(arr)-2)]
         else:
             for i in range(len(arr)):
                 if data_type[i] == "datetime":
