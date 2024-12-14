@@ -53,6 +53,11 @@ class ChartWidget(pg.PlotWidget):
 
         self._init_ui()
 
+    def update_all_view(self):
+        for v in self._plot_charts_dict.values():
+            for item in v:
+                item.update()
+
     def closeEvent(self, event):
         event.accept()
         os._exit(0)

@@ -145,6 +145,7 @@ class ChartBase(pg.GraphicsObject):
         pass
 
     def update_history_data(self, info: ChartItemInfo):
+        self.prepareGeometryChange()  # 在数据改变前调用
         self._discrete_list = info.discrete_list
         self._bars = info.bars
         self._type = info.type

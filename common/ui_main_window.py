@@ -110,6 +110,12 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             self.setWindowTitle(file_name)
 
+        self.widget.update_all_view()
+        self.widget._update_y_range()
+        self.widget.scene().update()  # 请求QGraphicsScene更新绘制
+        self.widget.viewport().update()  # 请求QGraphicsView更新
+
+
 
 
     def add_chart_item(self, plots, widget):
