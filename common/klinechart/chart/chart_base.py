@@ -55,6 +55,7 @@ class ChartBase(pg.GraphicsObject):
         self._down_brush: QtGui.QBrush = pg.mkBrush(color=DOWN_COLOR)
 
         self._rect_area: Tuple[float, float] = None
+        self._rect_bottom_top: Tuple[float, float] = None
 
         # Very important! Only redraw the visible part and improve speed a lot.
         # self.setFlag(self.ItemUsesExtendedStyleOption)
@@ -171,14 +172,18 @@ class ChartBase(pg.GraphicsObject):
         """
         rect = opt.exposedRect
 
+
         min_ix = int(rect.left())
         max_ix = int(rect.right())
         max_ix = min(max_ix, len(self._bar_picutures))
 
         rect_area = (min_ix, max_ix)
-        if rect_area != self._rect_area or not self._item_picuture:
-            self._rect_area = rect_area
-            self._draw_item_picture(min_ix, max_ix)
+        rect_bottom_top = (rect.bottom(), rect.top())
+        # if rect_area != self._rect_area or not self._item_picuture :
+        self._tmp_rect = rect
+        self._rect_area = rect_area
+        self._rect_bottom_top = rect_bottom_top
+        self._draw_item_picture(min_ix, max_ix)
 
         self._item_picuture.play(painter)
 

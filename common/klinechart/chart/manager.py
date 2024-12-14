@@ -24,6 +24,15 @@ class BarManager:
         self._all_ranges: Dict[PlotIndex, Dict[MinMaxIdxTuple, MinMaxPriceTuple]] = {}
         self.klines: list[KLine] = []
 
+    def clear_all(self):
+        self._datetime_index_map: Dict[datetime, TIndex] = {}  # 存储dt和index 映射表
+        self._index_datetime_map: Dict[TIndex, datetime] = {}  # 存储index和时间映射表
+
+        self._all_chart_infos: Dict[PlotIndex, PlotItemInfo] = {}
+        self._all_ranges: Dict[PlotIndex, Dict[MinMaxIdxTuple, MinMaxPriceTuple]] = {}
+        self.klines: list[KLine] = []
+        pass
+
     def update_history_klines(self, bars):
         for v in bars:
             k: KLine = KLine()
@@ -54,7 +63,9 @@ class BarManager:
         """
         Get total number of bars.
         """
-        return len(self._all_chart_infos[0][0].bars)
+        if self._all_chart_infos and self._all_chart_infos[0]:
+            return len(self._all_chart_infos[0][0].bars)
+        return 0
 
     def get_index_from_dt(self, dt: datetime) -> int:
         """

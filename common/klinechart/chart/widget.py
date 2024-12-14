@@ -179,12 +179,12 @@ class ChartWidget(pg.PlotWidget):
         """
         self.manager.clear_all()
 
-        for items in self._plot_charts_dict.values():
-            for item in items:
-                item.clear_all()
-
-        if self._cursor:
-            self._cursor.clear_all()
+        # for items in self._plot_charts_dict.values():
+        #     for item in items:
+        #         item.clear_all()
+        #
+        # if self._cursor:
+        #     self._cursor.clear_all()
 
 
     # def update_history(self, history: List[BarData]) -> None:

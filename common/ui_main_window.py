@@ -95,6 +95,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
 
     def load_data_from_file_name(self, code=""):
+        self.widget.clear_all()
         if code:
             file_name = self.code_file_dic[code]
             # print(self.conf["plots"])
@@ -147,6 +148,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # # 表示紧跟一个井号
         # .* 表示任意字符（中间部分可有多种形式）
         # L9\.txt$ 以 L9.txt 结尾
+
         pattern = re.compile(r'^\d+#[^#]*L9\.txt$')
         items = []
         dic: Dict[str, str] = {}
