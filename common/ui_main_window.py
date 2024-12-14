@@ -1,16 +1,13 @@
-import os, sys
+import os, sys, re
 from PySide6 import QtCore, QtWidgets
 if "PyQt5" in sys.modules:
     del sys.modules["PyQt5"]
 
-from typing import Dict, List
 from common.klinechart.chart import ChartWidget, ChartVolume, ChartCandle, ChartMacd,\
     ChartArrow, ChartLine, ChartStraight, ChartSignal, ItemIndex, ChartShadow
 from common.klinechart.chart.object import DataItem
 from common.klinechart.chart import PlotIndex, BarDict, PlotItemInfo, ChartItemInfo
-# from common.klinechart.trader.config import conf
 from common.utils import file_txt
-from common.model.kline import KLine
 from common.algo.zigzag import OnCalculate
 from common.algo.weibi import get_weibi_list
 from common.callback.call_back import *
@@ -35,7 +32,7 @@ def obtain_data_from_algo(klines: list[KLine], data: Dict[PlotIndex, PlotItemInf
                     info.bars = globals()[info.func_name](klines)
 
 
-def load_data(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]:  # 从文件中读取数据
+def load_data_from_conf(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]:  # 从文件中读取数据
     """
     返回以layout_index, index为key的各item的kl_data_list
     """
@@ -49,7 +46,10 @@ def load_data(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]:  # 从文�
             item_info.params = item["params"] if "params" in item else []
             item_info.func_name = item["func_name"] if "func_name" in item else ""
             item_info.data_type = item["data_type"] if "data_type" in item else []
-            data_list = file_txt.tail(f'{conf["conf"]["base_path"]}/{item["file_name"]}')
+            if item["file_name"]:   # 存在则读取文件
+                data_list = file_txt.tail(f'{conf["conf"]["base_path"]}/{item["file_name"]}')
+            else:
+                data_list = []  # 否则直接返回空列表
             bar_dict: BarDict = calc_bars(data_list, item_info.data_type)
             item_info.bars = bar_dict
             plot_info[ItemIndex(item_index)] = item_info
@@ -72,24 +72,44 @@ def calc_bars(data_list, data_type: List[str]) -> BarDict:
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, conf):
         super().__init__()
-        datas: Dict[PlotIndex, PlotItemInfo] = load_data(conf)
-        widget = ChartWidget(self)
-        widget.manager.update_history_klines(datas[PlotIndex(0)][ItemIndex(0)].bars.values())
-        obtain_data_from_algo(widget.manager.klines, datas)
-        weibis = get_weibi_list(widget.manager.klines)
+        self.conf = conf
+        self.widget = ChartWidget(self)
 
-        self.add_chart_item(conf["plots"], widget)
+        self.add_chart_item(conf["plots"], self.widget)
 
-        widget.add_cursor()
-        widget.update_all_history_data(datas)
+        self.widget.add_cursor()
 
-        self.graphWidget = widget
-        self.setCentralWidget(self.graphWidget)
+        # datas: Dict[PlotIndex, PlotItemInfo] = load_data_from_conf(self.conf)
+        # self.widget.update_all_history_data(datas, obtain_data_from_algo)
+        self.load_data_from_file_name()
+
+        self.setCentralWidget(self.widget)
 
         # 加载股票代码和名称列表
-        self.stock_list = self.load_stock_list()
+        self.code_name_list, self.code_file_dic = self.load_keyboard_sprite_data()
+
         # 创建键盘精灵窗口
+
         self.keyboard_genie = KeyboardGenieWindow(self)
+        self.keyboard_genie.funcs = self.load_data_from_file_name
+
+
+    def load_data_from_file_name(self, code=""):
+        if code:
+            file_name = self.code_file_dic[code]
+            # print(self.conf["plots"])
+            self.conf["plots"][0]["chart_item"][0]["file_name"] = file_name
+        datas: Dict[PlotIndex, PlotItemInfo] = load_data_from_conf(self.conf)
+        self.widget.update_all_history_data(datas, obtain_data_from_algo)
+        file_name = self.conf["plots"][0]["chart_item"][0]["file_name"]
+        print("file_name: ", file_name)
+        # 将 file_name 设置到窗口标题中
+        if code:
+            self.setWindowTitle(code)
+        else:
+            self.setWindowTitle(file_name)
+
+
 
     def add_chart_item(self, plots, widget):
         for plot_index, plot in enumerate(plots):
@@ -118,18 +138,40 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     raise "not match item"
 
-    def load_stock_list(self):
-            # 示例：从文件或数据库加载股票列表
-            # 此处使用简单的列表作为示例
-            stock_list = [
-                {'code': '600519', 'name': '贵州茅台'},
-                {'code': '000001', 'name': '平安银行'},
-                {'code': '000002', 'name': '万科A'},
-                {'code': '600036', 'name': '招商银行'},
-                {'code': '600837', 'name': '海通证券'},
-                # ... 更多股票代码和名称 ...
-            ]
-            return stock_list
+    def load_keyboard_sprite_data(self):
+        base_path = self.conf["conf"]["base_path"]
+        # 示例：从文件或数据库加载股票列表
+        # 此处使用简单的列表作为示例
+        # 定义文件名匹配的正则表达式
+        # ^\d+ 表示文件名以数字开头
+        # # 表示紧跟一个井号
+        # .* 表示任意字符（中间部分可有多种形式）
+        # L9\.txt$ 以 L9.txt 结尾
+        pattern = re.compile(r'^\d+#[^#]*L9\.txt$')
+        items = []
+        dic: Dict[str, str] = {}
+        for file_name in os.listdir(base_path):
+            if pattern.match(file_name):
+                file_path = os.path.join(base_path, file_name)
+                with open(file_path, 'r', encoding='gb2312') as f:
+                    first_line = f.readline().strip()
+                    fields = first_line.split()
+                    if len(fields) >= 2:
+                        code = fields[0].strip()
+                        name = fields[1].strip()
+                        items.append({'code': code, 'name': name})
+                        dic[code] = file_name
+        return items, dic
+        #
+        # items = [
+        #     {'code': '600519', 'name': '贵州茅台'},
+        #     {'code': '000001', 'name': '平安银行'},
+        #     {'code': '000002', 'name': '万科A'},
+        #     {'code': '600036', 'name': '招商银行'},
+        #     {'code': '600837', 'name': '海通证券'},
+        #     # ... 更多股票代码和名称 ...
+        # ]
+        # return items, []
 
     def keyPressEvent(self, event):
         key = event.key()
@@ -189,7 +231,7 @@ class MainWindow(QtWidgets.QMainWindow):
         matching_stocks = []
         input_upper = input_text.strip().upper()
         if input_upper:
-            for stock in self.stock_list:
+            for stock in self.code_name_list:
                 if input_upper in stock['code'] or input_upper in stock['name'].upper():
                     matching_stocks.append(stock)
 

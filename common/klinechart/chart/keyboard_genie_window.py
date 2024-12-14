@@ -3,6 +3,7 @@ from PySide6 import QtGui, QtWidgets, QtCore
 class KeyboardGenieWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.funcs = None
         # 设置窗口标志，使其成为子窗口，无标题栏和边框
         # self.setWindowFlags(QtCore.Qt.SubWindow | QtCore.Qt.FramelessWindowHint)
         # self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
@@ -119,6 +120,7 @@ class KeyboardGenieWindow(QtWidgets.QWidget):
         if selected_items:
             selected_stock_code = selected_items[0].data(QtCore.Qt.UserRole)
             print(f"按下回车选中股票代码：{selected_stock_code}")
+            self.funcs(selected_stock_code)
             # 在这里加载股票数据并更新图表
             self.hide()
             self.parent().setFocus()
@@ -128,6 +130,7 @@ class KeyboardGenieWindow(QtWidgets.QWidget):
                 item = self.matching_list_widget.item(0)
                 selected_stock_code = item.data(QtCore.Qt.UserRole)
                 print(f"按下回车默认选中第一项股票代码：{selected_stock_code}")
+                self.funcs(selected_stock_code)
                 # 在这里加载股票数据并更新图表
                 self.hide()
                 self.parent().setFocus()

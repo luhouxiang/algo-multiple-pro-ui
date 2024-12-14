@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/algo-multiple-pro-demo.iml" filepath="$PROJECT_DIR$/.idea/algo-multiple-pro-demo.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/algo-multiple-pro-min.iml" filepath="$PROJECT_DIR$/.idea/algo-multiple-pro-min.iml" />
     </modules>
   </component>
 </project>
