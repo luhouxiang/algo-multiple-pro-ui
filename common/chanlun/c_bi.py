@@ -791,71 +791,102 @@ def three_intervals_overlap(a, b, c, d, e, f):
 
 
 def process_down_up(base: int, bi_list: List[stBiK]) -> Tuple[Optional[Pivot], int, bool]:
-    """处理向下线段内的中枢计算。
     """
-    pivot = Pivot()
-    # 检查当前锚点是否为底分型（即笔的方向为向下）
-    if base + 3 < len(bi_list) and intervals_overlap(bi_list[base].lowest, bi_list[base].highest,
-                                                           bi_list[base+2].lowest, bi_list[base+2].highest):
-        # 起点：第一个底
-        pivot.highly_value = min(bi_list[base].highest, bi_list[base + 2].highest)
-        pivot.lowly_value = max(bi_list[base].lowest, bi_list[base + 2].lowest)
-        # 初始化终点为第二个顶
-        pivot.bg_pos_index = bi_list[base].pos_begin
-        pivot.ed_pos_index = bi_list[base + 2].pos_end
-        i = base + 4
-        # 寻找中枢的终点
-        while i < len(bi_list):
-            if not intervals_overlap(pivot.lowly_value, pivot.highly_value, bi_list[i].lowest, bi_list[i].highest):
-                break
-            pivot.ed_pos_index = bi_list[i].pos_end
-            i += 2  # 只需检查顶分型
+    尝试从 base 开始识别一个中枢，要求至少三笔重叠。
 
-        base = i
-        if bi_list[base-1].side == KSide.UP:
-            pivot.up = True
-        else:
-            pivot.up = False
-        return pivot, base, True
-    else:
-        base += 2  # 移动到下一个底分型
-        return None, base, True
-    # else:   # DOWN
-    #     if base + 3 < len(bi_list) and three_intervals_overlap(bi_list[base].lowest, bi_list[base].highest,
-    #                                                            bi_list[base+2].lowest, bi_list[base+2].highest):
-    #         pivot.highly_value = min(bi_list[base].highest, bi_list[base + 2].highest)
-    #         pivot.lowly_value = max(bi_list[base].lowest, bi_list[base + 2].lowest)
-    #
-    #         pivot.bg_pos_index = bi_list[base].pos_begin
-    #         pivot.ed_pos_index = bi_list[base + 2].pos_end
-    #         i = base + 4
-    #         # 寻找中枢的终点
-    #         while i < len(bi_list):
-    #             if not intervals_overlap(pivot.lowly_value, pivot.highly_value, bi_list[i].lowest, bi_list[i].highest):
-    #                 break
-    #             pivot.ed_pos_index = bi_list[i].pos_end
-    #             i += 2  # 只需检查底分型
-    #         base = i
-    #         pivot.up = True
-    #         return pivot, base, True
-    #     else:
-    #         base += 2  # 移动到下一个顶分型
-    #         return None, base, True
+    步骤：
+    1. 检查 base 与 base+2 的笔是否有重叠，如果无重叠，直接跳过。
+    2. 若有重叠，再检查 base+4 的笔是否也与前面形成的区间重叠。只有当第三笔也重叠时，才形成初步中枢。
+    3. 若三笔重叠成功，则把这三笔的重叠区间确定为中枢初始区间，然后尝试继续向后扩展。
+    4. 在扩展过程中，每新增一笔（顶或底）必须与中枢区间重叠，否则终止扩展。
+    5. 最后根据中枢结束时最后一笔的方向确定中枢方向。
+    """
+    # 首先确保 base+2 和 base+4 不越界
+    if base + 2 >= len(bi_list):
+        return None, len(bi_list), False
+    if base + 4 >= len(bi_list):
+        # 没有足够的笔来形成三笔重叠，不继续尝试
+        return None, len(bi_list), False
+
+    # 第一步：检查前两笔的重叠 (base 与 base+2)
+    if not intervals_overlap(
+        bi_list[base].lowest, bi_list[base].highest,
+        bi_list[base+2].lowest, bi_list[base+2].highest
+    ):
+        # 没有两笔重叠就不必继续，base往后移2
+        new_base = base + 2
+        if new_base >= len(bi_list):
+            return None, new_base, False
+        return None, new_base, True
+
+    # 两笔重叠，记录此时的中枢区间
+    low_val = max(bi_list[base].lowest, bi_list[base+2].lowest)
+    high_val = min(bi_list[base].highest, bi_list[base+2].highest)
+
+    # 第二步：检查第三笔 (base+4) 是否与该区间重叠
+    if not intervals_overlap(low_val, high_val,
+                             bi_list[base+4].lowest, bi_list[base+4].highest):
+        # 第三笔不重叠，则无法构成三笔中枢
+        new_base = base + 2
+        if new_base >= len(bi_list):
+            return None, new_base, False
+        return None, new_base, True
+
+    # 有三笔重叠了，可以确定初步中枢
+    pivot = Pivot()
+    # 更新中枢区间为三笔重叠后的交集区间
+    low_val = max(low_val, bi_list[base+4].lowest)
+    high_val = min(high_val, bi_list[base+4].highest)
+    pivot.lowly_value = low_val
+    pivot.highly_value = high_val
+    pivot.bg_pos_index = bi_list[base].pos_begin
+    pivot.ed_pos_index = bi_list[base+4].pos_end
+
+    # 尝试扩展中枢，从 base+6 开始
+    i = base + 6
+    while i < len(bi_list):
+        if not intervals_overlap(pivot.lowly_value, pivot.highly_value,
+                                 bi_list[i].lowest, bi_list[i].highest):
+            break
+        # 如果还有重叠，则扩大中枢结束位置，并更新 pivot 区间（再次取重叠区间交集）
+        pivot.ed_pos_index = bi_list[i].pos_end
+        pivot.lowly_value = max(pivot.lowly_value, bi_list[i].lowest)
+        pivot.highly_value = min(pivot.highly_value, bi_list[i].highest)
+        i += 2  # 跳两个，因为笔是底-顶-底结构交替
+
+    # 中枢已确定，更新 base 为中枢结束后的位置 i
+    base = i
+
+    # 确保 base-1 在范围内，用于判断中枢方向
+    if base - 1 < 0 or base - 1 >= len(bi_list):
+        # 无法确定方向了（理论上不应出现，但安全起见）
+        return pivot, base, False
+
+    # 根据结束笔的方向确定中枢方向
+    pivot.up = (bi_list[base - 1].side == KSide.UP)
+
+    return pivot, base, True
 
 
 def compute_bi_pivots(bi_list: List[stBiK]) -> List[Pivot]:
-    """计算笔中枢"""
+    """
+    计算笔中枢：
+    要求至少三笔形成重叠才能称为中枢。
+    """
     pivots = []
-    if len(bi_list) <= 4:
+    # 至少需要足够的笔长度（判断3笔重叠最少需要5根笔：base, base+2, base+4）
+    if len(bi_list) < 5:
         return pivots
-    base = 1   # 从第二个锚点开始
-    while base < len(bi_list) - 2:
-        pivot, base, should_continue = process_down_up(base, bi_list)
+
+    base = 1  # 从第二个锚点开始尝试
+    while base < len(bi_list) - 4:  # 至少留足够空间检查 base+4
+        pivot, new_base, should_continue = process_down_up(base, bi_list)
         if pivot:
             pivots.append(pivot)
+        base = new_base
         if not should_continue:
             break
-        # base += 1
+
     return pivots
 
 
@@ -889,7 +920,7 @@ def compute_pivots_in_segment(seg: Segment, anchors: List[int], bi_list: List[st
 
 
 def compute_standard_pivots(bi_list: List[stBiK]) -> List[Pivot]:
-    """计算所有线段中的标准中枢"""
+    """计算标准中枢"""
     pivots = compute_bi_pivots(bi_list)
     return pivots
 
