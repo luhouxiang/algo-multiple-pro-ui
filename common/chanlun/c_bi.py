@@ -836,8 +836,8 @@ def process_down_up(base: int, bis: List[stBiK]) -> Tuple[Optional[Pivot], int]:
         if not intervals_overlap(pivot.lowly_value, pivot.highly_value, bis[i].lowest, bis[i].highest):
             break
         pivot.ed_pos_index = bis[i].pos_end
-        pivot.lowly_value = max(pivot.lowly_value, bis[i].lowest)
-        pivot.highly_value = min(pivot.highly_value, bis[i].highest)
+        # pivot.lowly_value = max(pivot.lowly_value, bis[i].lowest)
+        # pivot.highly_value = min(pivot.highly_value, bis[i].highest)
         i += 2  # 跳过下一笔（底、顶交替）
 
     # 更新 base 为中枢结束后的位置
