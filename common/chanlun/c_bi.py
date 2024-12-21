@@ -808,7 +808,7 @@ def process_down_up(base: int, bis: List[stBiK]) -> Tuple[Optional[Pivot], int]:
             return None, len(bis)
         return None, new_base
 
-    # 若不满足至少 base+4，无法形成三笔
+    # 若不满足至少 base+2，无法形成三笔
     if base + 2 >= len(bis):
         return None, len(bis)
 
@@ -821,29 +821,19 @@ def process_down_up(base: int, bis: List[stBiK]) -> Tuple[Optional[Pivot], int]:
     low_val = max(bis[base].lowest,  bis[base+2].lowest)
     high_val = min(bis[base].highest, bis[base+2].highest)
 
-    # # 2) 检查第三笔 (base+4) 与上面区间是否重叠
-    # if not intervals_overlap(low_val, high_val,
-    #                          bis[base+4].lowest, bis[base+4].highest):
-    #     return shift_base_by_2(base)  # 第三笔不重叠，无法形成三笔
-
-    # 3) 已有三笔重叠，创建初步中枢
     pivot = Pivot()
     # 根据第一笔的方向确定中枢的方向
     pivot.up = (bis[base].side == KSide.UP)
 
-    # 更新中枢区间为三笔重叠后的交集区间
-    # low_val = max(low_val, bis[base+4].lowest)
-    # high_val = min(high_val, bis[base+4].highest)
     pivot.lowly_value = low_val
     pivot.highly_value = high_val
     pivot.bg_pos_index = bis[base].pos_begin
     pivot.ed_pos_index = bis[base+2].pos_end
 
-    # 4) 从 base+4 开始继续扩展
+    # 从 base+4 开始继续扩展
     i = base + 4
     while i < len(bis):
-        if not intervals_overlap(pivot.lowly_value, pivot.highly_value,
-                                 bis[i].lowest, bis[i].highest):
+        if not intervals_overlap(pivot.lowly_value, pivot.highly_value, bis[i].lowest, bis[i].highest):
             break
         pivot.ed_pos_index = bis[i].pos_end
         pivot.lowly_value = max(pivot.lowly_value, bis[i].lowest)
