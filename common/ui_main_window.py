@@ -47,7 +47,8 @@ def load_data_from_conf(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]: 
             item_info.func_name = item["func_name"] if "func_name" in item else ""
             item_info.data_type = item["data_type"] if "data_type" in item else []
             if item["file_name"]:   # 存在则读取文件
-                data_list = file_txt.tail(f'{conf["conf"]["base_path"]}/{item["file_name"]}')
+                kline_count = conf["conf"]["kline_count"] if conf["conf"]["kline_count"] else 1000
+                data_list = file_txt.tail(f'{conf["conf"]["base_path"]}/{item["file_name"]}', kline_count)
             else:
                 data_list = []  # 否则直接返回空列表
             bar_dict: BarDict = calc_bars(data_list, item_info.data_type)
