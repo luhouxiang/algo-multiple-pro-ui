@@ -133,15 +133,17 @@ class stBiK:
 class Segment:
     """段"""
     def __init__(self):
-        self.start_index: int = 0
-        self.end_index: int = 0
+        self.pos_begin: int = 0     # K线索引，开始
+        self.pos_end: int = 0       # K线索引，结束
+        self.start_index: int = 0   # 笔开始索引
+        self.end_index: int = 0     # 笔结束索引
         self.highest: float = 0.0
         self.lowest: float = 0.0
         self.up: bool = False
         self.is_sure = False    # 是否被确认
 
     def __str__(self):
-        up_seg = f"[{self.is_sure}][{self.start_index}]⬈[{self.end_index}]"
+        up_seg = f"[{self.is_sure}][{self.pos_begin}]⬈[{self.pos_end}]"
         down_seg = f"[{self.is_sure}][{self.start_index}]⬊[{self.end_index}]"
         if self.up:
             return up_seg

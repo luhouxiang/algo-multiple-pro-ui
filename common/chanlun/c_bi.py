@@ -593,8 +593,8 @@ def _NCHDUAN(vtDisivion: List[stBiK], pData: List[KLine]) -> List[Segment]:
             iter.lowest = vtDisivion[iter.end_index].lowest
             iter.highest = vtDisivion[iter.start_index].highest
 
-        iter.start_index = vtDisivion[iter.start_index].pos_begin
-        iter.end_index = vtDisivion[iter.end_index].pos_begin
+        iter.pos_begin = vtDisivion[iter.start_index].pos_begin
+        iter.pos_end = vtDisivion[iter.end_index].pos_begin
 
 
     if len(ret) > 0:
@@ -897,13 +897,6 @@ def compute_pivots_in_segment(seg: Segment, anchors: List[int], bi_list: List[st
                     break  # 未找到终点，退出循环
                 base += 1  # 移动到下一个锚点
     return pivots
-
-
-def compute_standard_pivots(bi_list: List[stBiK]) -> List[Pivot]:
-    """计算标准中枢"""
-    pivots = compute_bi_pivots(bi_list)
-    return pivots
-
 
 
 

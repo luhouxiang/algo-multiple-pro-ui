@@ -12,7 +12,7 @@ from common.algo.weibi import get_weibi_list
 from typing import List, Any
 from common.model.obj import Direction
 from common.chanlun.c_bi import Cal_LOWER
-from common.chanlun.c_bi import Cal_UPPER, cal_independent_klines, calculate_bi, _NCHDUAN, compute_standard_pivots
+from common.chanlun.c_bi import Cal_UPPER, cal_independent_klines, calculate_bi, _NCHDUAN, compute_bi_pivots
 from typing import Dict
 import logging
 import json
@@ -139,8 +139,8 @@ def fn_calc_seg(klines: list[KLine]) -> List[Segment]:
     seg_list: List[Segment] = _NCHDUAN(bi_list, klines)
     items = []
     for w in seg_list:
-        s_dt = datetime.fromtimestamp(klines[w.start_index].time)
-        e_dt = datetime.fromtimestamp(klines[w.end_index].time)
+        s_dt = datetime.fromtimestamp(klines[w.pos_begin].time)
+        e_dt = datetime.fromtimestamp(klines[w.pos_end].time)
         if w.up:
             items.append([s_dt, w.lowest, e_dt, w.highest, 0, "yellow"])
         else:
@@ -157,8 +157,7 @@ def fn_calc_pivot(klines: list[KLine]) -> List[Pivot]:
     independents = init_independents(combs)
 
     bi_list = calculate_bi(lower, upper, merges, independents)
-    # seg_list: List[Segment] = _NCHDUAN(bi_list, klines)
-    pivots: List[Pivot] = compute_standard_pivots(bi_list)
+    pivots: List[Pivot] = compute_bi_pivots(bi_list)
     items = []
     for w in pivots:
         s_dt = datetime.fromtimestamp(klines[w.bg_pos_index].time)
