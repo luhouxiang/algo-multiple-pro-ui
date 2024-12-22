@@ -1,7 +1,7 @@
 conf:
   base_path: D:/new_tdx/T0002/export
   # K线数量
-  kline_count: 2000
+  kline_count: 3000
 plots:
   # type类型： Line：线段，两个端点的， Straight:直线， Candle:表示K线， Curve：曲线，例MA5
   -
@@ -24,7 +24,10 @@ plots:
       type: Straight
     -
       file_name: ""
-      func_name: fn_calc_pivot
+      func_name: fn_calc_bi_pivot
+      type: Straight
+    - file_name: ""
+      func_name: fn_calc_duan_pivot
       type: Straight
   -
     max_height: 120

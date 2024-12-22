@@ -8,7 +8,7 @@
 如果方向向上，则取其中高点中的高点作为新K线高点，取其中低点中的高点作为新K线低点，由此合并出一根新K线。
 """
 from common.model.kline import KLine, stCombineK, KSide, stFxK, stBiK, KExtreme, Segment, Pivot
-from typing import List, Optional
+from typing import List, Optional, Union
 from common.chanlun.float_compare import *
 import copy
 import logging
@@ -790,7 +790,7 @@ def three_intervals_overlap(a, b, c, d, e, f):
     return intervals_overlap(a, b, c, d) and intervals_overlap(a, b, e, f) and intervals_overlap(c, d, e, f)
 
 
-def process_down_up(base: int, bis: List[stBiK]) -> Tuple[Optional[Pivot], int]:
+def process_down_up(base: int, bis: Union[List[stBiK], List[Segment]]) -> Tuple[Optional[Pivot], int]:
     """
     尝试从 base 开始识别一个中枢，要求至少三笔重叠。
     注：中枢的方向由第一笔的方向决定。
@@ -853,7 +853,7 @@ def compute_bi_pivots(bi_list: List[stBiK]) -> List[Pivot]:
     要求至少三笔形成重叠才能称为中枢。
     """
     pivots = []
-    # 至少需要足够的笔长度（判断3笔重叠最少需要5根笔：base, base+2, base+4）
+    # 至少需要足够的笔长度（判断3笔重叠最少需要3根笔：base, base+2）
     if len(bi_list) < 5:
         return pivots
 
@@ -870,6 +870,27 @@ def compute_bi_pivots(bi_list: List[stBiK]) -> List[Pivot]:
     return pivots
 
 
+def compute_duan_pivots(seg_list: List[Segment]) -> List[Pivot]:
+    """
+    计算段中枢：
+    要求至少三笔形成重叠才能称为中枢。
+    """
+    pivots = []
+    # 至少需要足够的笔长度（判断3笔重叠最少需要3根笔：base, base+2）
+    if len(seg_list) < 5:
+        return pivots
+
+    base = 1  # 从第二个锚点开始尝试
+    while base < len(seg_list) - 2:  # 至少留足够空间检查 base+4
+        pivot, new_base = process_down_up(base, seg_list)
+        if pivot:
+            pivots.append(pivot)
+        if base == new_base - 2:
+            base = new_base - 1
+        else:
+            base = new_base - 2
+
+    return pivots
 
 
 

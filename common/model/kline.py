@@ -139,13 +139,13 @@ class Segment:
         self.end_index: int = 0     # 笔结束索引
         self.highest: float = 0.0
         self.lowest: float = 0.0
-        self.up: bool = False
+        self.side: KSide = KSide.Init
         self.is_sure = False    # 是否被确认
 
     def __str__(self):
         up_seg = f"[{self.is_sure}][{self.pos_begin}]⬈[{self.pos_end}]"
         down_seg = f"[{self.is_sure}][{self.start_index}]⬊[{self.end_index}]"
-        if self.up:
+        if self.side == KSide.UP:
             return up_seg
         else:
             return down_seg

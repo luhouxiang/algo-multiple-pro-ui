@@ -12,7 +12,8 @@ from common.algo.weibi import get_weibi_list
 from typing import List, Any
 from common.model.obj import Direction
 from common.chanlun.c_bi import Cal_LOWER
-from common.chanlun.c_bi import Cal_UPPER, cal_independent_klines, calculate_bi, _NCHDUAN, compute_bi_pivots
+from common.chanlun.c_bi import (Cal_UPPER, cal_independent_klines, calculate_bi, _NCHDUAN, compute_bi_pivots,
+                                 compute_duan_pivots)
 from typing import Dict
 import logging
 import json
@@ -148,8 +149,8 @@ def fn_calc_seg(klines: list[KLine]) -> List[Segment]:
     return items
 
 
-def fn_calc_pivot(klines: list[KLine]) -> List[Pivot]:
-    """回调计算中枢"""
+def fn_calc_bi_pivot(klines: list[KLine]) -> List[Pivot]:
+    """回调计算笔中枢"""
     lower: List[stFxK] = Cal_LOWER(klines)
     upper: List[stFxK] = Cal_UPPER(klines)
     combs = cal_independent_klines(klines)
@@ -166,6 +167,33 @@ def fn_calc_pivot(klines: list[KLine]) -> List[Pivot]:
             color = "red"
         else:
             color = "green"
+        items.append([s_dt, w.lowly_value, e_dt, w.lowly_value, 0, color])
+        items.append([s_dt, w.highly_value, e_dt, w.highly_value, 0, color])
+        items.append([s_dt, w.lowly_value, s_dt, w.highly_value, 0, color])
+        items.append([e_dt, w.lowly_value, e_dt, w.highly_value, 0, color])
+    return items
+
+
+def fn_calc_duan_pivot(klines: list[KLine]) -> List[Pivot]:
+    """回调计算中枢"""
+    lower: List[stFxK] = Cal_LOWER(klines)
+    upper: List[stFxK] = Cal_UPPER(klines)
+    combs = cal_independent_klines(klines)
+    merges = init_merges(combs, klines)
+    independents = init_independents(combs)
+
+    bi_list = calculate_bi(lower, upper, merges, independents)
+    seg_list = _NCHDUAN(bi_list, klines)
+    pivots: List[Pivot] = compute_duan_pivots(seg_list)
+    items = []
+    for w in pivots:
+        s_dt = datetime.fromtimestamp(klines[w.bg_pos_index].time)
+        e_dt = datetime.fromtimestamp(klines[w.ed_pos_index].time)
+        # if w.up:
+        #     color = "red"
+        # else:
+        #     color = "green"
+        color = "yellow"
         items.append([s_dt, w.lowly_value, e_dt, w.lowly_value, 0, color])
         items.append([s_dt, w.highly_value, e_dt, w.highly_value, 0, color])
         items.append([s_dt, w.lowly_value, s_dt, w.highly_value, 0, color])
