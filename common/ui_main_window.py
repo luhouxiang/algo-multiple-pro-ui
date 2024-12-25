@@ -12,6 +12,7 @@ from common.algo.zigzag import OnCalculate
 from common.algo.weibi import get_weibi_list
 from common.callback.call_back import *
 from common.klinechart.chart.keyboard_genie_window import KeyboardGenieWindow
+from common.utils.pinyin_util import get_pinyin_first_letters
 
 
 def calc_zig_zag(klines: List[KLine]):
@@ -116,9 +117,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.widget.scene().update()  # 请求QGraphicsScene更新绘制
         self.widget.viewport().update()  # 请求QGraphicsView更新
 
-
-
-
     def add_chart_item(self, plots, widget):
         for plot_index, plot in enumerate(plots):
             if plot_index != len(plots) - 1:
@@ -146,6 +144,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 else:
                     raise "not match item"
 
+
     def load_keyboard_sprite_data(self):
         base_path = self.conf["conf"]["base_path"]
         # 示例：从文件或数据库加载股票列表
@@ -168,7 +167,8 @@ class MainWindow(QtWidgets.QMainWindow):
                     if len(fields) >= 2:
                         code = fields[0].strip()
                         name = fields[1].strip()
-                        items.append({'code': code, 'name': name})
+                        pinyin = get_pinyin_first_letters(name)
+                        items.append({'code': code, 'name': name, 'pinyin': pinyin})
                         dic[code] = file_name
         return items, dic
         #
@@ -241,7 +241,7 @@ class MainWindow(QtWidgets.QMainWindow):
         input_upper = input_text.strip().upper()
         if input_upper:
             for stock in self.code_name_list:
-                if input_upper in stock['code'] or input_upper in stock['name'].upper():
+                if input_upper in stock['code'] or input_upper in stock['pinyin'].upper():
                     matching_stocks.append(stock)
 
         self.keyboard_genie.matching_list_widget.clear()
