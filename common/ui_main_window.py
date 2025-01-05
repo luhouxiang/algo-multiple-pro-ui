@@ -49,7 +49,7 @@ def load_data_from_conf(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]: 
             item_info.data_type = item["data_type"] if "data_type" in item else []
             if item["file_name"]:   # 存在则读取文件
                 kline_count = conf["conf"]["kline_count"] if conf["conf"]["kline_count"] else 1000
-                data_list = file_txt.tail(f'{conf["conf"]["base_path"]}/{item["file_name"]}', kline_count)
+                data_list = file_txt.tail(f'{conf["conf"]["base_path"]}/{item["file_name"]}', kline_count, conf["conf"]["end_dt"])
             else:
                 data_list = []  # 否则直接返回空列表
             bar_dict: BarDict = calc_bars(data_list, item_info.data_type)
@@ -65,6 +65,7 @@ def load_data_from_conf(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]: 
 def calc_bars(data_list, data_type: List[str]) -> BarDict:
     bar_dict: BarDict = {}
     for data_index, txt in enumerate(data_list):
+        logging.info(F"txt:{txt}")
         bar = DataItem(txt, data_type)
         if bar:
             bar_dict[bar[0]] = bar

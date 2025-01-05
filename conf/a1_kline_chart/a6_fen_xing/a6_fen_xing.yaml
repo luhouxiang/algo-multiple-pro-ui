@@ -2,6 +2,7 @@ conf:
   base_path: D:/new_tdx/T0002/export
   # K线数量
   kline_count: 3000
+  end_dt: "2024-08-15 09:00:00"
 plots:
   # type类型： Line：线段，两个端点的， Straight:直线， Candle:表示K线， Curve：曲线，例MA5
   -
