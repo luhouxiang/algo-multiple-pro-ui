@@ -208,7 +208,8 @@ def _read_in_reverse(file_path: str, block_size: int, n: int, end_dt) -> list[st
             partial_decoded = _decode_lines([partial_line], encoding="gb2312")
             if partial_decoded:
                 # 检查是否9列
-                if len(partial_decoded[0].split(",")) == 9:
+                code = partial_decoded[0].split(",")
+                if len(code) == 9 and len(code[0]) == 10:
                     # 若 end_dt 存在, 同样做一次时间检查后再拼
                     _merge_lines_with_time_check(data_lines, partial_decoded, dt_end)
     items = []

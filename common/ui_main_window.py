@@ -65,7 +65,7 @@ def load_data_from_conf(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]: 
 def calc_bars(data_list, data_type: List[str]) -> BarDict:
     bar_dict: BarDict = {}
     for data_index, txt in enumerate(data_list):
-        # logging.info(F"txt:{txt}")
+        logging.info(F"txt:{txt}")
         bar = DataItem(txt, data_type)
         if bar:
             bar_dict[bar[0]] = bar
