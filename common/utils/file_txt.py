@@ -2,6 +2,8 @@ import os
 from typing import List
 import logging
 from datetime import datetime
+from dataclasses import dataclass
+
 import copy
 def read_file(file_name) -> List[str]:
     """
@@ -34,138 +36,186 @@ def _check_file_validity(file_path: str) -> bool:
     return True
 
 
-def _read_in_reverse(file_path: str, block_size: int, n: int, end_dt) -> list[bytes]:
+def _init_file_pos(f):
     """
-    从文件末尾，逆向分块读取，直到获取到至少n行(按 b'\n' 分割)或读取到文件开头。
-    返回分割后的“行”字节串列表（从最前到最后的顺序）。
-    注意：在本函数中，这些“行”还未解码，只是字节级split。
+    移动到文件尾部, 返回文件大小.
+    若文件大小为0, 表示空文件.
     """
-    if end_dt:
-        end_dt = datetime.strptime(end_dt, '%Y-%m-%d %H:%M:%S')
-    data_lines = []
-    with open(file_path, 'rb') as f:
-        # 移动到文件尾部
-        f.seek(0, 2)
-        file_size = f.tell()
+    f.seek(0, 2)
+    file_size = f.tell()
+    return file_size
 
+
+def _read_block(f, file_size, block_size):
+    """
+    从 file_size 向前 block_size 个字节(或直到文件头)读取一块数据.
+    返回 (chunk, new_file_size).
+    """
+    read_start = max(file_size - block_size, 0)
+    f.seek(read_start)
+    chunk = f.read(file_size - read_start)
+    new_file_size = read_start
+    return chunk, new_file_size
+
+
+def _split_lines_preserve_partial(chunk, partial_line):
+    """
+    将 chunk + partial_line 合并并 split.
+    保持 `partial_line = lines[0]` 不动的逻辑:
+      - lines[0] 被视作不完整行, 存入 partial_line
+      - lines[1:] 才是完整行.
+
+    返回 (new_partial_line, complete_lines)
+    """
+    new_buffer = chunk + partial_line
+    lines = new_buffer.split(b'\n')
+    # 根据你的需求: lines[0] => new_partial_line, lines[1:] => complete_lines
+    new_partial_line = lines[0]
+    complete_lines = lines[1:]
+    return new_partial_line, complete_lines
+
+
+def _decode_lines(raw_lines, encoding="gb2312"):
+    """
+    解码原始字节行, 并去除空行.
+    """
+    decoded = []
+    for b_line in raw_lines:
+        if not b_line:
+            continue
+        line_str = b_line.decode(encoding, errors='ignore').strip()
+        if line_str:
+            decoded.append(line_str)
+    return decoded
+
+
+def _parse_time_if_possible(line):
+    """
+    按照你目前的行格式, 假设:
+        code = line.split(',')
+        if len(code) == 9:
+            dt = datetime.strptime(code[0]+code[1], '%Y/%m/%d%H%M')
+    若无法解析或格式不符, 返回 None
+    """
+    parts = line.split(',')
+    if len(parts) == 9:
+        try:
+            dt = datetime.strptime(parts[0] + parts[1], '%Y/%m/%d%H%M')
+            return dt
+        except:
+            return None
+    return None
+
+@dataclass
+class DataLines:
+    count: int
+    lines: List[List[str]]
+
+
+def _merge_lines_with_time_check(data_lines: DataLines, new_lines: List[str], end_dt) -> int:
+    """
+    如果 end_dt 不为空, 从 new_lines(已解码)里找 <= end_dt 的行并拼接到 data_lines.
+    若 data_lines 还为空时, 要把 "从后往前" 读到的第一批 lines 里,
+    找到最后一个 <= end_dt 的位置后再截断.
+    否则, 直接全部拼接.
+
+    data_lines, new_lines 均为 "从前到后" 或 "从后到前" 的列表,
+    这里你原代码对顺序要求: data_lines = complete_lines + data_lines
+    """
+    if not end_dt:
+        # 不做时间判断, 直接拼接
+        data_lines.count += len(new_lines)
+        data_lines.lines.append(new_lines)
+        return data_lines.count
+
+    if data_lines.count == 0:
+        # data_lines为空时, 需要找最后一个 <= end_dt 的行
+        # new_lines现在顺序不明, 但你写的是: data_lines = new_lines + data_lines
+        # => new_lines更老? 还是更新? 根据你原有逻辑是 "chunk + partial_line" 逆向.
+        # 这里跟你之前“reversed(enumerate(new_lines))”类似:
+        cut_idx = -1
+        for idx in reversed(range(len(new_lines))):
+            line = new_lines[idx]
+            dt = _parse_time_if_possible(line)
+            if dt and dt <= end_dt:
+                cut_idx = idx
+                break
+        # 如果找到了 cut_idx
+        if cut_idx != -1:
+            # 保留 new_lines[:cut_idx+1], 拼到 data_lines
+            new_lines = new_lines[:cut_idx+1]
+            data_lines.count += len(new_lines)
+            data_lines.lines.append(new_lines)
+            return data_lines.count
+        else:
+            # 没有任何行 <= end_dt, 返回原data_lines(还是空)
+            return data_lines.count
+    else:
+        # data_lines不为空, 说明之前已经加过一些行了
+        data_lines.count += len(new_lines)
+        data_lines.lines.append(new_lines)
+        return data_lines.count
+
+
+def count_klines(data_lines):
+    s = 0
+    for k in data_lines:
+        s += len(k)
+    return s
+
+
+def _read_in_reverse(file_path: str, block_size: int, n: int, end_dt) -> list[str]:
+    """
+    主函数: 从文件末尾逆向分块读取, 保持 partial_line = lines[0].
+    拼装到 data_lines(从你原代码看, 最后返回从最前到最后的顺序).
+
+    1) 若 end_dt 有值, 解析成 datetime
+    2) 循环读块, split -> partial_line + complete_lines
+    3) complete_lines 解码后, 做时间检查与拼接
+    4) 直到 data_lines数>=n 或到文件开头
+    5) 最后处理 partial_line
+    6) 返回 data_lines
+    """
+    # 1) 处理 end_dt
+    dt_end = None
+    if end_dt:
+        dt_end = datetime.strptime(end_dt, '%Y-%m-%d %H:%M:%S')
+
+    data_lines = DataLines(count=0, lines=[])
+    with open(file_path, 'rb') as f:
+        # 初始化文件大小
+        file_size = _init_file_pos(f)
         if file_size == 0:
             return []
 
         partial_line = b''
 
-        while len(data_lines) <= n and file_size > 0:
-            read_start = max(file_size - block_size, 0)
-            f.seek(read_start)
-            chunk = f.read(file_size - read_start)
+        # 2) 循环读取, 直到 data_lines >= n 或 file_size = 0
+        while data_lines.count <= n and file_size > 0:
+            chunk, file_size = _read_block(f, file_size, block_size)
 
-            # 更新下次读取起点(更前)
-            file_size = read_start
+            # 把 chunk + partial_line 做 split, 并保留 partial_line = lines[0] 逻辑
+            partial_line, complete_raw_lines = _split_lines_preserve_partial(chunk, partial_line)
 
-            # 将本次读取的数据拼到buffer前面（逆向）
-            new_buffer = chunk + partial_line
-            lines = new_buffer .split(b'\n')
-            partial_line = lines[0]
-            complete_lines = lines[1:]
-            complete_lines = _decode_last_n_lines(complete_lines, len(complete_lines), "gb2312")
-            if not end_dt:
-                data_lines = complete_lines + data_lines
-            else:
-                if not data_lines:
-                    for index,item in reversed(list(enumerate(complete_lines))):
-                        code = item.split(',')
-                        if len(code) == 9:
-                            dt = datetime.strptime(code[0]+code[1], '%Y/%m/%d%H%M')
-                            if end_dt >= dt:
-                                complete_lines = complete_lines[:index+1]
-                                data_lines = complete_lines + data_lines
-                else:
-                    data_lines = complete_lines + data_lines
+            # 解码
+            complete_lines_decoded = _decode_lines(complete_raw_lines, encoding="gb2312")
 
+            # 时间检查 + 拼接
+            _merge_lines_with_time_check(data_lines, complete_lines_decoded, dt_end)
+
+        # 3) 最后若 partial_line 还有内容, 尝试解码并拼接(看格式是否匹配9列)
         if partial_line:
-            code = _decode_last_n_lines([partial_line], 1, "gb2312")
-            if len(code[0].split(",")) == 9:
-                data_lines = code + data_lines
-    return data_lines
+            partial_decoded = _decode_lines([partial_line], encoding="gb2312")
+            if partial_decoded:
+                # 检查是否9列
+                if len(partial_decoded[0].split(",")) == 9:
+                    # 若 end_dt 存在, 同样做一次时间检查后再拼
+                    _merge_lines_with_time_check(data_lines, partial_decoded, dt_end)
+    items = []
+    for item in reversed(data_lines.lines):
+        items.extend(item)
+    return items
 
-#
-# def _read_in_reverse(file_path: str, block_size: int, n: int) -> list[bytes]:
-#     """
-#     从文件末尾，逆向分块读取，直到获取到至少n行(按 b'\n' 分割)或读取到文件开头。
-#     返回分割后的“行”字节串列表（从最前到最后的顺序）。
-#     注意：在本函数中，这些“行”还未解码，只是字节级split。
-#     """
-#     raw_lines = []
-#     with open(file_path, 'rb') as f:
-#         # 移动到文件尾部
-#         f.seek(0, 2)
-#         file_size = f.tell()
-#
-#         if file_size == 0:
-#             return []
-#
-#         buffer = b''
-#         while len(raw_lines) <= n and file_size > 0:
-#             read_start = max(file_size - block_size, 0)
-#             f.seek(read_start)
-#             chunk = f.read(file_size - read_start)
-#
-#             # 更新下次读取起点(更前)
-#             file_size = read_start
-#
-#             # 将本次读取的数据拼到buffer前面（逆向）
-#             buffer = chunk + buffer
-#             raw_lines = buffer.split(b'\n')
-#
-#     return raw_lines
-#
-
-#
-# def _read_in_reverse(file_path: str, block_size: int, n: int) -> list[bytes]:
-#     """
-#     从文件末尾逆向分块读取，直到获取到至少 n 行(按 b'\n' 分割)
-#     或到达文件开头为止，返回字节串形式的行列表（从最旧 -> 最新）。
-#     """
-#     raw_lines = []         # 用于存放最终行
-#     partial_line = b''     # 用于存放不完整的行片段
-#
-#     with open(file_path, 'rb') as f:
-#         # 移动到文件尾部，获取文件大小
-#         f.seek(0, 2)
-#         file_size = f.tell()
-#
-#         if file_size == 0:
-#             return []
-#
-#         while len(raw_lines) < n and file_size > 0:
-#             # 计算本次要读取的区段
-#             read_start = max(file_size - block_size, 0)
-#             f.seek(read_start)
-#             chunk = f.read(file_size - read_start)
-#
-#             # 更新下一次“向前”读取的位置
-#             file_size = read_start
-#
-#             # 将本次读到的 chunk 与上一次剩余的 partial_line 拼接
-#             # 注意：由于 chunk 来自更早的数据，所以要放在 partial_line 前面
-#             chunk = chunk + partial_line
-#
-#             # 按 b'\n' 拆分
-#             lines = chunk.split(b'\n')
-#
-#             # 最后一段可能是新的“部分行”
-#             # lines[:-1] 是本次提取到的“完整行”
-#             partial_line = lines[-1]
-#             complete_lines = lines[:-1]
-#
-#             # 这些“完整行”比原来 raw_lines 中的行更早，因此将它们放到 raw_lines 前面
-#             raw_lines = complete_lines + raw_lines
-#
-#         # 读完后，如果 partial_line 里还有内容，就代表还剩最后一行未被换行符截断
-#         if partial_line:
-#             raw_lines = [partial_line] + raw_lines
-#
-#     return raw_lines
-#
 
 def _decode_last_n_lines(raw_lines: list[bytes], n: int, encoding: str) -> list[str]:
     """
@@ -205,7 +255,7 @@ def _filter_special_lines(lines: list[str]) -> list[str]:
     return lines
 
 
-def tail(file_path: str, n: int = 1000, end_dt="", encoding: str = 'gb2312') -> list[str]:
+def tail_kline(file_path: str, n: int = 1000, end_dt="", encoding: str = 'gb2312') -> list[str]:
     """
     主函数：返回文件末尾 n 行(经过简单过滤)。
     具体步骤:
@@ -227,16 +277,10 @@ def tail(file_path: str, n: int = 1000, end_dt="", encoding: str = 'gb2312') -> 
     if not decoded_lines:
         return []
 
-    # 3) 解码并取最后 n 行
-    # decoded_lines = _decode_last_n_lines(raw_lines, n+2, encoding)
-
-    # if not decoded_lines:
-    #     return []
-
-    # 4) 特殊行过滤
+    # 3) 特殊行过滤
     filtered = _filter_special_lines(decoded_lines)
 
-    # 5) 返回结果
+    # 4) 返回结果
     return filtered
 
 #
