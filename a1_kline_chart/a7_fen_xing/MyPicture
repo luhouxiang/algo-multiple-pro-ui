@@ -1,0 +1,37 @@
+digraph Tree {
+node [shape=box, style="filled, rounded", color="black", fontname="Microsoft YaHei"] ;
+edge [fontname="Microsoft YaHei"] ;
+0 [label="3个月手机号关联身份证数 <= 2.5\ngini = 0.029\nsamples = 5076\nvalue = [5000, 76]", fillcolor="#e5833c"] ;
+1 [label="1个月内借款人身份证申请借款平台数 <= 33.5\ngini = 0.027\nsamples = 5044\nvalue = [4974, 70]", fillcolor="#e5833c"] ;
+0 -> 1 [labeldistance=2.5, labelangle=45, headlabel="True"] ;
+2 [label="3个月内申请人关联融资租赁平台数 <= 1.0\ngini = 0.027\nsamples = 5037\nvalue = [4969, 68]", fillcolor="#e5833c"] ;
+1 -> 2 ;
+3 [label="7天内关联P2P网贷平台数 <= 0.5\ngini = 0.024\nsamples = 4909\nvalue = [4849, 60]", fillcolor="#e5833b"] ;
+2 -> 3 ;
+4 [label="是否命中身份证风险关注名单 <= 0.5\ngini = 0.019\nsamples = 4392\nvalue = [4349, 43]", fillcolor="#e5823b"] ;
+3 -> 4 ;
+5 [label="gini = 0.017\nsamples = 4025\nvalue = [3991, 34]", fillcolor="#e5823b"] ;
+4 -> 5 ;
+6 [label="gini = 0.048\nsamples = 367\nvalue = [358, 9]", fillcolor="#e6843e"] ;
+4 -> 6 ;
+7 [label="一度风险名单个数 <= 0.5\ngini = 0.064\nsamples = 517\nvalue = [500, 17]", fillcolor="#e68540"] ;
+3 -> 7 ;
+8 [label="gini = 0.06\nsamples = 513\nvalue = [497, 16]", fillcolor="#e6853f"] ;
+7 -> 8 ;
+9 [label="gini = 0.375\nsamples = 4\nvalue = [3, 1]", fillcolor="#eeab7b"] ;
+7 -> 9 ;
+10 [label="二度风险名单个数 <= 3.5\ngini = 0.117\nsamples = 128\nvalue = [120, 8]", fillcolor="#e78946"] ;
+2 -> 10 ;
+11 [label="二度风险名单个数 <= 0.5\ngini = 0.104\nsamples = 127\nvalue = [120, 7]", fillcolor="#e78845"] ;
+10 -> 11 ;
+12 [label="gini = 0.093\nsamples = 123\nvalue = [117, 6]", fillcolor="#e68743"] ;
+11 -> 12 ;
+13 [label="gini = 0.375\nsamples = 4\nvalue = [3, 1]", fillcolor="#eeab7b"] ;
+11 -> 13 ;
+14 [label="gini = 0.0\nsamples = 1\nvalue = [0, 1]", fillcolor="#399de5"] ;
+10 -> 14 ;
+15 [label="gini = 0.408\nsamples = 7\nvalue = [5, 2]", fillcolor="#efb388"] ;
+1 -> 15 ;
+16 [label="gini = 0.305\nsamples = 32\nvalue = [26, 6]", fillcolor="#eb9e67"] ;
+0 -> 16 [labeldistance=2.5, labelangle=-45, headlabel="False"] ;
+}

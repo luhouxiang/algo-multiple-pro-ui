@@ -118,7 +118,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.widget.scene().update()  # 请求QGraphicsScene更新绘制
         self.widget.viewport().update()  # 请求QGraphicsView更新
 
-    def add_chart_item(self, plots, widget):
+    def add_chart_item(self, plots: List[Any], widget: ChartWidget):
         for plot_index, plot in enumerate(plots):
             if plot_index != len(plots) - 1:
                 axis = True

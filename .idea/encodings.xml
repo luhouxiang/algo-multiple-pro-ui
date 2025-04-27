@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="Encoding">
+    <file url="file://$PROJECT_DIR$/a1_kline_chart/a7_fen_xing/data1.csv" charset="GBK" />
+    <file url="file://$PROJECT_DIR$/a1_kline_chart/a7_fen_xing/testtdmodel1.csv" charset="GBK" />
     <file url="file://$PROJECT_DIR$/logs/a1_kline_chart/a1_fen_xing/a1_fen_xing.log" charset="GBK" />
   </component>
 </project>

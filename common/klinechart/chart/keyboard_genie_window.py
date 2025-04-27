@@ -4,30 +4,6 @@ class KeyboardGenieWindow(QtWidgets.QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.funcs = None
-        # 设置窗口标志，使其成为子窗口，无标题栏和边框
-        # self.setWindowFlags(QtCore.Qt.SubWindow | QtCore.Qt.FramelessWindowHint)
-        # self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
-        # 设置窗口标志
-        # self.setWindowFlags(
-        #     QtCore.Qt.SubWindow |
-        #     QtCore.Qt.Tool |
-        #     QtCore.Qt.CustomizeWindowHint |
-        #     QtCore.Qt.WindowDoesNotAcceptFocus |
-        #     QtCore.Qt.WindowCloseButtonHint
-        # )
-        # 设置窗口标志，移除标题栏并确保窗口保持在父窗口前面
-        # self.setWindowFlags(
-        #     QtCore.Qt.Tool |
-        #     QtCore.Qt.FramelessWindowHint |
-        #     QtCore.Qt.WindowStaysOnTopHint |
-        #     QtCore.Qt.WindowDoesNotAcceptFocus
-        # )
-        # self.setWindowFlags(
-        #     QtCore.Qt.Tool |
-        #     QtCore.Qt.FramelessWindowHint |
-        #     QtCore.Qt.WindowStaysOnTopHint
-        #     # 移除 QtCore.Qt.WindowDoesNotAcceptFocus
-        # )
         self.setWindowFlags(
             QtCore.Qt.Window |
             QtCore.Qt.FramelessWindowHint |

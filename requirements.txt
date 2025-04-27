@@ -1,6 +1,6 @@
 tzlocal>=5.0
 PySide6>=6.6
-pyqtgraph>=0.13
+pyqtgraph==0.13.4
 numpy>=1.26
 pandas>=2.2
 matplotlib>=3.9
