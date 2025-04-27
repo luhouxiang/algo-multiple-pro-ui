@@ -9,7 +9,7 @@ plots:
     max_height: 0
     chart_item:
     -
-      file_name: 28#SRL9.txt
+      file_name: SRL9.txt
       type: Candle
     -
       file_name: ""

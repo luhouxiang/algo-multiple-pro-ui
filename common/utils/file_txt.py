@@ -356,3 +356,28 @@ def write_file(file_name, lines: List[str], append: bool):
             for line in lines:
                 f.write(F"{line}\n")
             f.flush()
+
+
+def list_only_files(directory) -> list[str]:
+    files: list[str] = []
+    """只列出目录中的文件，不包括子文件夹"""
+    for item in os.listdir(directory):
+        item_path = os.path.join(directory, item)
+        if os.path.isfile(item_path):
+            print(item)
+            files.append(item)
+    return files
+
+
+def find_first_file(target: str, files: list[str]) -> str:
+    """返回第一个包含 'rbL9'（不区分大小写）的文件名
+
+    Args:
+        files: 文件名字符串列表
+
+    Returns:
+        第一个匹配的文件名（保留原始大小写），如果没有则返回空字符串
+    """
+    # target = 'rbL9'
+    return next((f for f in files if target.lower() in f.lower()), "")
+

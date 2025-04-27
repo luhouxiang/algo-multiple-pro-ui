@@ -47,15 +47,19 @@ def load_data_from_conf(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]: 
             item_info.params = item["params"] if "params" in item else []
             item_info.func_name = item["func_name"] if "func_name" in item else ""
             item_info.data_type = item["data_type"] if "data_type" in item else []
-            if item["file_name"]:   # 存在则读取文件
+            file_name = item["file_name"]
+            base_path = conf["conf"]["base_path"]
+            if file_name:   # 存在则读取文件
                 kline_count = conf["conf"]["kline_count"] if conf["conf"]["kline_count"] else 1000
-                data_list = file_txt.tail_kline(f'{conf["conf"]["base_path"]}/{item["file_name"]}', kline_count, conf["conf"]["end_dt"])
+                file_list = file_txt.list_only_files(base_path)
+                file_name = file_txt.find_first_file(file_name, file_list)
+                data_list = file_txt.tail_kline(f'{base_path}/{file_name}', kline_count, conf["conf"]["end_dt"])
             else:
                 data_list = []  # 否则直接返回空列表
             bar_dict: BarDict = calc_bars(data_list, item_info.data_type)
             item_info.bars = bar_dict
             plot_info[ItemIndex(item_index)] = item_info
-            logging.info(F"file_name: {item['file_name']}")
+            logging.info(F"file_name: {file_name}")
             logging.info(F"plot_index:{plot_index}, item_index:{item_index}, len(bar_dict)={len(bar_dict)}")
         local_data[PlotIndex(plot_index)] = plot_info
 
