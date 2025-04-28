@@ -33,7 +33,5 @@ def read_csv(file_name):
     return ohlc_data
 
 
-data = read_csv('28#SRL9.txt')
-
-# 打印结果
-print(data)
+if __name__ == '__main__':
+    read_csv(r'D:\new_tdx\T0002\export\30#AGL9.txt')
