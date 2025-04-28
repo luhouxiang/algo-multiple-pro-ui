@@ -177,3 +177,4 @@ if __name__ == "__main__":
         for i, channel in enumerate(all_channels):
             print(
                 f"通道 {i + 1}: 类型={channel['type']}, 起始时间={channel['start_idx']}, 结束时间={channel['end_idx']}")
+
