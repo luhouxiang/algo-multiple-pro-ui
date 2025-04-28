@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 """K线序列数据管理工具
 """
-from typing import Dict, Tuple
+from typing import Dict, Tuple, List
+import numpy as np
+import pandas as pd
 
 from .object import PlotItemInfo, TIndex
 from .object import PlotIndex, ItemIndex, ChartItemInfo, MinMaxIdxTuple, MinMaxPriceTuple
@@ -10,6 +12,7 @@ from .base import to_int
 from common.model.kline import KLine
 from datetime import datetime
 import logging
+
 
 
 class BarManager:
@@ -23,6 +26,29 @@ class BarManager:
         self._all_chart_infos: Dict[PlotIndex, PlotItemInfo] = {}
         self._all_ranges: Dict[PlotIndex, Dict[MinMaxIdxTuple, MinMaxPriceTuple]] = {}
         self.klines: list[KLine] = []
+        self.datas = None
+
+    def convert_kline_to_dataframe(self, kline_list: List[KLine]) -> pd.DataFrame:
+        """
+        Convert List[KLine] to OHLC DataFrame
+
+        Args:
+            kline_list: List of KLine objects
+
+        Returns:
+            pd.DataFrame with columns: ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Symbol']
+        """
+        data = {
+            'Date': [pd.to_datetime(k.time, unit='s') for k in kline_list],
+            'Open': [k.open for k in kline_list],
+            'High': [k.high for k in kline_list],
+            'Low': [k.low for k in kline_list],
+            'Close': [k.close for k in kline_list],
+            'Volume': [k.volume for k in kline_list],
+            'Symbol': [k.symbol for k in kline_list]
+        }
+
+        return pd.DataFrame(data)
 
     def clear_all(self):
         self._datetime_index_map: Dict[datetime, TIndex] = {}  # 存储dt和index 映射表
@@ -43,6 +69,7 @@ class BarManager:
             k.close = v[4]
             k.volume = v[5]
             self.klines.append(k)
+        self.datas = self.convert_kline_to_dataframe(self.klines)
         logging.info(f"klines.size={len(self.klines)}")
 
 
