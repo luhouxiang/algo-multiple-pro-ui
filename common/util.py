@@ -16,6 +16,10 @@ import sqlite3
 from functools import wraps
 import pickle
 import threading
+from common.model.kline import KLine
+from typing import List
+
+
 from cachetools import TTLCache
 
 # 全局的定时调度器
@@ -424,6 +428,29 @@ def cache_init_func_result(func):
         return result
 
     return wrapper
+
+
+def convert_kline_to_dataframe(kline_list: List[KLine]) -> pd.DataFrame:
+    """
+    Convert List[KLine] to OHLC DataFrame
+
+    Args:
+        kline_list: List of KLine objects
+
+    Returns:
+        pd.DataFrame with columns: ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Symbol']
+    """
+    data = {
+        'Date': [pd.to_datetime(k.time, unit='s') for k in kline_list],
+        'Open': [k.open for k in kline_list],
+        'High': [k.high for k in kline_list],
+        'Low': [k.low for k in kline_list],
+        'Close': [k.close for k in kline_list],
+        'Volume': [k.volume for k in kline_list],
+        'Symbol': [k.symbol for k in kline_list]
+    }
+
+    return pd.DataFrame(data)
 
 
 if __name__ == "__main__":

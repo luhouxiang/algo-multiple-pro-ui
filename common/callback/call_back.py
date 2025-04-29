@@ -7,9 +7,11 @@ Created on
 """
 from common.model.kline import KLine, KExtreme, KSide, stFxK, stCombineK, Segment, Pivot
 from common.algo.formula import MA
+from common.algo.channel import find_all_channels
 from datetime import datetime
 from common.algo.weibi import get_weibi_list
 from typing import List, Any
+from common.util import convert_kline_to_dataframe
 from common.model.obj import Direction
 from common.chanlun.c_bi import Cal_LOWER
 from common.chanlun.c_bi import (Cal_UPPER, cal_independent_klines, calculate_bi, _NCHDUAN, compute_bi_pivots,
@@ -27,7 +29,7 @@ def fn_calc_ma20_60(klines: list[KLine]):
         dt = datetime.fromtimestamp(k.time)
         MA20.input(k.close)
         MA60.input(k.close)
-        bars[dt] = [dt, MA20.ma]
+        bars[dt] = [dt, MA20.ma, MA60.ma]
     return bars
 
 
@@ -96,6 +98,23 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
     upper_count = sum(1 for value in fenxin.values() if value[-1] == -1)
     logging.info(f"fn_calc_up_lower_upper end.K线数量：{len(lower)}, 顶: {lower_count}, 底: {upper_count}")
     return fenxin
+
+
+def fn_calc_channel(klines: List[KLine]):
+    fenxin = {}
+    logging.info(f"fn_calc_channel begin...")
+    datas = convert_kline_to_dataframe(klines)
+    all_channels = find_all_channels(datas, lookback=40)
+    logging.info(f"all_channels_size = {len(all_channels)}")
+    side = -1
+    for item in all_channels:
+        if item['type'] == 'Ascending':
+            side = 1
+        for i in range(item['start_idx'], item['end_idx']+1):
+            dt = datetime.fromtimestamp(klines[i].time)
+            fenxin[dt] = [dt, side]
+    return fenxin
+
 
 
 def init_independents(combs: List[stCombineK]):

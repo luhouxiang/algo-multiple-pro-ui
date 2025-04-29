@@ -11,25 +11,29 @@ plots:
     -
       file_name: SRL9.txt
       type: Candle
-    -
-      file_name: ""
-      func_name: fn_calc_independent_klines
-      type: Shadow
-    -
-      file_name: ""
-      func_name: fn_calc_bi
-      type: Straight
-    -
-      file_name: ""
-      func_name: fn_calc_seg
-      type: Straight
-    -
-      file_name: ""
-      func_name: fn_calc_bi_pivot
-      type: Straight
-    - file_name: ""
-      func_name: fn_calc_duan_pivot
-      type: Straight
+    - file_name: "均线"
+      type: Line
+      params: [ "MA20", "MA60" ]
+      func_name: fn_calc_ma20_60
+#    -
+#      file_name: ""
+#      func_name: fn_calc_independent_klines
+#      type: Shadow
+#    -
+#      file_name: ""
+#      func_name: fn_calc_bi
+#      type: Straight
+#    -
+#      file_name: ""
+#      func_name: fn_calc_seg
+#      type: Straight
+#    -
+#      file_name: ""
+#      func_name: fn_calc_bi_pivot
+#      type: Straight
+#    - file_name: ""
+#      func_name: fn_calc_duan_pivot
+#      type: Straight
   -
     max_height: 120
     chart_item:
@@ -43,4 +47,11 @@ plots:
     -
       file_name: ""
       func_name: fn_calc_up_lower_upper
+      type: Signal
+  -
+    max_height: 120
+    chart_item:
+    -
+      file_name: ""
+      func_name: fn_calc_channel
       type: Signal
