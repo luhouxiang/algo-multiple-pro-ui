@@ -168,14 +168,14 @@ class Cfg():
         self.conf = {}
 
     def load_yaml(self):
-        # path = CFG_FN
-        logging.info(f"conf_path: {self.path}")
-        with open(self.path, 'r', encoding='utf-8') as f:
-            self.conf = yaml.safe_load(f)
-            # config = yaml.load(f, Loader=yaml.FullLoader)
-            # config = yaml.load(f.read(), Loader=yaml.FullLoader)
-            # yaml.dump(data, f, default_flow_style=False, encoding='utf-8', allow_unicode=True)
-
-        return self.conf
+        try:
+            logging.info(f"正在加载配置文件: {self.path}")
+            with open(self.path, 'r', encoding='utf-8') as f:
+                self.conf = yaml.safe_load(f) or {}
+            return self.conf
+        except (IOError, yaml.YAMLError) as e:
+            logging.error(f"加载配置文件失败: {str(e)}")
+            self.conf = {}  # 设置默认空配置
+            return self.conf
 
 

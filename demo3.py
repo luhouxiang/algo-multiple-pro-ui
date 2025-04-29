@@ -74,7 +74,8 @@ if one_buy_idx is not None:
             segment = close_prices[start_i:start_i+window_size]
             seg_high = np.max(segment)
             seg_low = np.min(segment)
-            if (seg_high - seg_low)/seg_low < 0.05: # 简单模拟中枢
+            PRICE_FLUCTUATION_THRESHOLD = 0.05
+            if (seg_high - seg_low) / seg_low < PRICE_FLUCTUATION_THRESHOLD:  # 简单模拟中枢
                 for j in range(start_i+window_size, min(start_i+window_size+20, len(close_prices))):
                     if close_prices[j] > seg_high:
                         two_buy_idx = j
