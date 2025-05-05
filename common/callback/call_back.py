@@ -100,23 +100,6 @@ def fn_calc_up_lower_upper(klines: List[KLine]):
     return fenxin
 
 
-def fn_calc_channel(klines: List[KLine]):
-    fenxin = {}
-    logging.info(f"fn_calc_channel begin...")
-    datas = convert_kline_to_dataframe(klines)
-    all_channels = find_all_channels(datas, lookback=40)
-    logging.info(f"all_channels_size = {len(all_channels)}")
-    side = -1
-    for item in all_channels:
-        if item['type'] == 'Ascending':
-            side = 1
-        for i in range(item['start_idx'], item['end_idx']+1):
-            dt = datetime.fromtimestamp(klines[i].time)
-            fenxin[dt] = [dt, side]
-    return fenxin
-
-
-
 def init_independents(combs: List[stCombineK]):
     """初始化K线索引和独立K线索引的映射关系"""
     independents: Dict[int, int] = {}
@@ -244,5 +227,19 @@ def fn_calc_independent_klines(klines: list[KLine]):
 #     pass
 #     # Cal_OLD_TEST(klines)
 
-
+def fn_calc_channel(klines: List[KLine]):
+    """计算通道"""
+    fenxin = {}
+    logging.info(f"fn_calc_channel begin...")
+    datas = convert_kline_to_dataframe(klines)
+    all_channels = find_all_channels(datas, lookback=35)
+    logging.info(f"all_channels_size = {len(all_channels)}")
+    side = -1
+    for item in all_channels:
+        if item['type'] == 'Ascending':
+            side = 1
+        for i in range(item['start_idx'], item['end_idx']+1):
+            dt = datetime.fromtimestamp(klines[i].time)
+            fenxin[dt] = [dt, side]
+    return fenxin
 

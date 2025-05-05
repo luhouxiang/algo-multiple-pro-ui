@@ -53,7 +53,9 @@ def load_data_from_conf(conf: Dict[str, any]) -> Dict[PlotIndex, PlotItemInfo]: 
                 kline_count = conf["conf"]["kline_count"] if conf["conf"]["kline_count"] else 1000
                 file_list = file_txt.list_only_files(base_path)
                 file_name = file_txt.find_first_file(file_name, file_list)
-                data_list = file_txt.tail_kline(f'{base_path}/{file_name}', kline_count, conf["conf"]["end_dt"])
+                start_dt = conf["conf"]["start_dt"] if "start_dt" in conf["conf"] else ""
+                end_dt = conf["conf"]["end_dt"] if "end_dt" in conf["conf"] else ""
+                data_list = file_txt.tail_kline(f'{base_path}/{file_name}', kline_count, start_dt, end_dt)
             else:
                 data_list = []  # 否则直接返回空列表
             bar_dict: BarDict = calc_bars(data_list, item_info.data_type)

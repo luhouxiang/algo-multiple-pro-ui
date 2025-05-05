@@ -441,7 +441,7 @@ def convert_kline_to_dataframe(kline_list: List[KLine]) -> pd.DataFrame:
         pd.DataFrame with columns: ['Date', 'Open', 'High', 'Low', 'Close', 'Volume', 'Symbol']
     """
     data = {
-        'Date': [pd.to_datetime(k.time, unit='s') for k in kline_list],
+        'Date': pd.to_datetime([k.time for k in kline_list], unit='s').tz_localize('UTC').tz_convert('Asia/Shanghai'),
         'Open': [k.open for k in kline_list],
         'High': [k.high for k in kline_list],
         'Low': [k.low for k in kline_list],

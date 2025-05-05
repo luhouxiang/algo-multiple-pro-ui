@@ -1,8 +1,8 @@
 import os
 from typing import List
 import logging
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime, timedelta
 
 import copy
 def read_file(file_name) -> List[str]:
@@ -218,6 +218,45 @@ def _read_in_reverse(file_path: str, block_size: int, n: int, end_dt) -> list[st
     return items
 
 
+def _read_between_dates(file_path, block_size, dt_start, dt_end):
+    lines_in_range = []
+    with open(file_path, 'r', encoding='gb2312') as file:
+        # 跳过文件的头两行
+        next(file)
+        next(file)
+        for line in file:
+            arr = line.split(',')
+            line_dt_str = arr[0] + ' ' + arr[1]
+            line_dt = datetime.strptime(line_dt_str, '%Y/%m/%d %H%M')
+            if line_dt.hour > 17 or line_dt.hour < 7:
+                line_dt -= timedelta(days=1)
+            if dt_start <= line_dt <= dt_end:
+                lines_in_range.append(line.strip())
+            elif line_dt > dt_end:
+                break
+
+    return lines_in_range
+
+
+def _read_from_start(file_path, block_size, dt_start, n):
+    lines_from_start = []
+    with open(file_path, 'r', encoding='gb2312') as file:
+        # 跳过文件的头两行
+        next(file)
+        next(file)
+        for line in file:
+            line_dt_str = line.split(',')[0]
+            line_dt = datetime.strptime(line_dt_str, '%Y-%m-%d %H:%M:%S')
+            if line_dt.hour > 17 or line_dt.hour < 7:
+                line_dt -= timedelta(days=1)
+            if line_dt >= dt_start:
+                lines_from_start.append(line.strip())
+                if len(lines_from_start) >= n:
+                    break
+
+    return lines_from_start
+
+
 def _decode_last_n_lines(raw_lines: list[bytes], n: int, encoding: str) -> list[str]:
     """
     对原始字节行进行解码并截取最后n行，过滤空行。
@@ -256,7 +295,7 @@ def _filter_special_lines(lines: list[str]) -> list[str]:
     return lines
 
 
-def tail_kline(file_path: str, n: int = 1000, end_dt="", encoding: str = 'gb2312') -> list[str]:
+def tail_kline(file_path: str, n: int = 1000, start_dt="", end_dt="", encoding: str = 'gb2312') -> list[str]:
     """
     主函数：返回文件末尾 n 行(经过简单过滤)。
     具体步骤:
@@ -273,7 +312,23 @@ def tail_kline(file_path: str, n: int = 1000, end_dt="", encoding: str = 'gb2312
 
     # 2) 逆向分块读取到至少 n+1 行(字节串)
     block_size = 1024
-    decoded_lines = _read_in_reverse(file_path, block_size, n, end_dt)
+    # 检查start_dt和end_dt是否存在
+    dt_start = datetime.strptime(start_dt, '%Y-%m-%d %H:%M:%S') if start_dt else None
+    dt_end = datetime.strptime(end_dt, '%Y-%m-%d %H:%M:%S') if end_dt else None
+
+    # 根据不同情况调用读取逻辑
+    if dt_start and dt_end:
+        # 同时存在start和end，忽略n，取两个时间之间的数据
+        decoded_lines = _read_between_dates(file_path, block_size, dt_start, dt_end)
+    elif dt_start:
+        # 只有start，取start开始的n条数据
+        decoded_lines = _read_from_start(file_path, block_size, dt_start, n)
+    else:
+        # 原逻辑：以end_dt为终点，向前取n条数据
+        decoded_lines = _read_in_reverse(file_path, block_size, n, end_dt)
+
+
+    # decoded_lines = _read_in_reverse(file_path, block_size, n, end_dt)
 
     if not decoded_lines:
         return []
@@ -283,63 +338,6 @@ def tail_kline(file_path: str, n: int = 1000, end_dt="", encoding: str = 'gb2312
 
     # 4) 返回结果
     return filtered
-
-#
-# def tail(file_path, n=1000, encoding='gb2312'):
-#     lines = []
-#     logging.info(f"read_file: {file_path}")
-#     if not os.path.exists(file_path):
-#         return lines
-#     if not os.path.isfile(file_path):
-#         return lines
-#
-#     with open(file_path, 'rb') as f:
-#         # 移动到文件尾部
-#         f.seek(0, 2)
-#         file_size = f.tell()
-#
-#         # 若文件为空，直接返回空列表
-#         if file_size == 0:
-#             return []
-#
-#         lines = []
-#         block_size = 1024
-#         buffer = b''
-#
-#         # 反复从文件末尾向前读取，直到获取到 n 行
-#         while len(lines) <= n and file_size > 0:
-#             # 计算本次读取的起点位置
-#             read_start = max(file_size - block_size, 0)
-#             f.seek(read_start)
-#             chunk = f.read(file_size - read_start)
-#
-#             # 更新文件当前位置（下次向更前读取）
-#             file_size = read_start
-#
-#             # 将本次读取数据添加到缓冲区前面（因为是逆向读取）
-#             buffer = chunk + buffer
-#             # 按行切割
-#             lines = buffer.split(b'\n')
-#
-#         # lines的最后n行即为所需要的数据，但由于lines最后一块split可能比n多，需要只取最后n行
-#         # 同时需要滤除可能出现的空行
-#         final_lines = [line.decode(encoding).strip() for line in lines[-n:] if line.strip()]
-#         if "通达信" in final_lines[-1]:
-#             final_lines = final_lines[:-1]
-#         if "不复权" in final_lines[0]:
-#             final_lines = final_lines[2:]
-#         if "成交量" in final_lines[0]:
-#             final_lines = final_lines[1:]
-#
-#         return final_lines
-
-
-# base_path = "D:/new_tdx/T0002/export"
-# # 使用示例
-# file_path = "29#ML9.txt"  # 替换为你的文件路径
-# last_five_lines = tail(f"{base_path}/{file_path}", n=1000)
-# for line in last_five_lines:
-#     print(line)
 
 
 def write_file(file_name, lines: List[str], append: bool):

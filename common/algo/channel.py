@@ -140,4 +140,32 @@ def find_all_channels(data: pd.DataFrame, lookback: int = 60):
                 'end_idx': segment_end
             })
         start_idx = end_idx - 1  # 可以覆盖重叠窗口以捕捉更细致的通道形态
+        # start_idx += 1
+    return all_channels
+
+
+def find_all_channels2(data: pd.DataFrame, lookback: int = 60):
+    """
+    在K线数据中查找所有可能的通道段
+
+    Args:
+        data (pd.DataFrame): 包含 'High', 'Low', 'Close' 列的 K 线数据，索引应为时间序列。
+        lookback (int): 用于识别通道的回看K线数量。
+
+    Returns:
+        list: 每个通道段的起始和结束位置及其类型
+    """
+    all_channels = []
+    start_idx = 0
+    while start_idx + lookback <= len(data):
+        end_idx = start_idx + lookback
+        segment = data.iloc[start_idx:end_idx]
+        channel_type, upper_params, lower_params, segment_start, segment_end = identify_channel(segment, lookback)
+        if channel_type != "No Channel":
+            all_channels.append({
+                'type': channel_type,
+                'start_idx': segment_start,
+                'end_idx': segment_end
+            })
+        start_idx = end_idx - 1  # 可以覆盖重叠窗口以捕捉更细致的通道形态
     return all_channels
