@@ -7,7 +7,7 @@ Created on
 """
 from common.model.kline import KLine, KExtreme, KSide, stFxK, stCombineK, Segment, Pivot
 from common.algo.formula import MA
-from common.algo.channel import find_all_channels
+from common.algo.channel import find_all_channels, find_all_channels2
 from datetime import datetime
 from common.algo.weibi import get_weibi_list
 from typing import List, Any
@@ -19,6 +19,7 @@ from common.chanlun.c_bi import (Cal_UPPER, cal_independent_klines, calculate_bi
 from typing import Dict
 import logging
 import json
+import talib
 
 
 def fn_calc_ma20_60(klines: list[KLine]):
@@ -232,7 +233,17 @@ def fn_calc_channel(klines: List[KLine]):
     fenxin = {}
     logging.info(f"fn_calc_channel begin...")
     datas = convert_kline_to_dataframe(klines)
-    all_channels = find_all_channels(datas, lookback=35)
+    atr = talib.ATR(datas['High'], datas['Low'], datas['Close'], timeperiod=14)
+    # 用第一个有效值填充前面的NaN
+    first_valid_index = atr.first_valid_index()  # 找到第一个非NaN的索引
+    if first_valid_index is not None:
+        first_valid_value = atr[first_valid_index]  # 获取第一个有效值
+        atr = atr.fillna(first_valid_value)  # 填充所有NaN
+    else:
+        atr = atr  # 如果没有有效值，保持原样
+    # 将ATR添加到DataFrame
+    datas['Atr'] = atr  # 关键操作：添加新列
+    all_channels = find_all_channels2(datas, lookback=70)
     logging.info(f"all_channels_size = {len(all_channels)}")
     side = -1
     for item in all_channels:
@@ -243,3 +254,41 @@ def fn_calc_channel(klines: List[KLine]):
             fenxin[dt] = [dt, side]
     return fenxin
 
+
+def fn_calc_atr(klines: list[KLine]):
+    """计算atr"""
+    bars = {}
+    datas = convert_kline_to_dataframe(klines)
+    atr = talib.ATR(datas['High'], datas['Low'], datas['Close'], timeperiod=20)
+    first_valid_index = atr.first_valid_index()  # 找到第一个非NaN的索引
+    if first_valid_index is not None:
+        first_valid_value = atr[first_valid_index]  # 获取第一个有效值
+        atr = atr.fillna(first_valid_value)  # 填充所有NaN
+    else:
+        atr = atr  # 如果没有有效值，保持原样
+    for i, k in enumerate(klines):
+        dt = datetime.fromtimestamp(k.time)
+        bars[dt] = [dt, atr[i]]
+    return bars
+
+
+def fn_calc_feek(klines: List[KLine]):
+    lower: List[stFxK] = Cal_LOWER(klines)
+    upper: List[stFxK] = Cal_UPPER(klines)
+    datas = convert_kline_to_dataframe(klines)
+    fenxin = {}
+    # logging.info(f"fn_calc_up_lower_upper begin.")
+    # for i in range(len(lower)):
+    #     dt = datetime.fromtimestamp(klines[i].time)
+    #     if lower[i].side == KExtreme.BOTTOM:
+    #         fenxin[dt] = [dt, -1]
+    #         # logging.info(f"底的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
+    # for i in range(len(upper)):
+    #     dt = datetime.fromtimestamp(klines[i].time)
+    #     if upper[i].side == KExtreme.TOP:
+    #         fenxin[dt] = [dt, 1]
+    #         # logging.info(f"顶的时间：[{dt.strftime('%Y-%m-%d %H:%M:%S')}]")
+    # lower_count = sum(1 for value in fenxin.values() if value[-1] == 1)
+    # upper_count = sum(1 for value in fenxin.values() if value[-1] == -1)
+    # logging.info(f"fn_calc_up_lower_upper end.K线数量：{len(lower)}, 顶: {lower_count}, 底: {upper_count}")
+    return fenxin

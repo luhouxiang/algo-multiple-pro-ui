@@ -2,8 +2,8 @@ conf:
   base_path: D:/new_tdx/T0002/export
   # K线数量
   kline_count: 1800
-  start_dt: "2025-03-24 11:30:00"
-  end_dt: "2025-03-26 15:00:00"
+  start_dt: "2025-04-16 11:30:00"
+  end_dt: "2025-04-22 15:00:00"
   # end_dt: "2025-04-26 09:00:00"
 plots:
   # type类型： Line：线段，两个端点的， Straight:直线， Candle:表示K线， Curve：曲线，例MA5
@@ -21,10 +21,10 @@ plots:
 #      file_name: ""
 #      func_name: fn_calc_independent_klines
 #      type: Shadow
-#    -
-#      file_name: ""
-#      func_name: fn_calc_bi
-#      type: Straight
+    -
+      file_name: ""
+      func_name: fn_calc_wei_bi
+      type: Straight
 #    -
 #      file_name: ""
 #      func_name: fn_calc_seg
@@ -43,13 +43,27 @@ plots:
       file_name: ""
       func_name: fn_calc_volumes
       type: Volume
+#  -
+#    max_height: 120
+#    chart_item:
+#    -
+#      file_name: ""
+#      func_name: fn_calc_up_lower_upper
+#      type: Signal
   -
     max_height: 120
     chart_item:
     -
       file_name: ""
-      func_name: fn_calc_up_lower_upper
+      func_name: fn_calc_feek
       type: Signal
+  -
+    max_height: 120
+    chart_item:
+    -
+      file_name: ""
+      func_name: fn_calc_atr
+      type: Line
   -
     max_height: 120
     chart_item:

@@ -37,11 +37,17 @@ class WeiBI:
 
     @property
     def high(self):
-        return max([x.high for x in self.bars])
+        if self.direction == Direction.Up:
+            return self.bars[-1].high
+        else:
+            return self.bars[0].high
 
     @property
     def low(self):
-        return min([x.low for x in self.bars])
+        if self.direction == Direction.Up:
+            return self.bars[0].low
+        else:
+            return self.bars[-1].low
 
     @property
     def low_close(self):
@@ -65,14 +71,16 @@ def get_weibi_list(ks: List[KLine], N=5) -> List[WeiBI]:
         mn = min(ls[max(i - N, 0):min(i + N, M)])
         if sel <= 0:  # 找到底后找顶
             if hs[i] == mx:
-                if sel == 0: tbs.append([0, -1])
+                if sel == 0:
+                    tbs.append([0, -1])
                 tbs.append([i, 1])  # 顶
                 sel = 1
             if tbs and ls[i] == mn and ls[i] < ls[tbs[-1][0]]:  # 找到更低的底
                 tbs[-1][0] = i
         if sel >= 0:
             if ls[i] == mn:
-                if sel == 0: tbs.append([0, 1])
+                if sel == 0:
+                    tbs.append([0, 1])
                 tbs.append([i, -1])
                 sel = -1
             if tbs and hs[i] == mx and hs[i] > hs[tbs[-1][0]]:  #
