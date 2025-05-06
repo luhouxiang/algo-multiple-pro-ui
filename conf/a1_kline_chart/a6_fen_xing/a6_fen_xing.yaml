@@ -3,7 +3,7 @@ conf:
   # K线数量
   kline_count: 1800
   start_dt: "2025-04-16 11:30:00"
-  end_dt: "2025-04-22 15:00:00"
+  end_dt: "2025-04-24 15:00:00"
   # end_dt: "2025-04-26 09:00:00"
 plots:
   # type类型： Line：线段，两个端点的， Straight:直线， Candle:表示K线， Curve：曲线，例MA5
